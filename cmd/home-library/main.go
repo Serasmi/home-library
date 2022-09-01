@@ -1,13 +1,10 @@
 package main
 
 import (
-	"encoding/json"
-	"github.com/gorilla/mux"
+	"context"
+	"github.com/Serasmi/home-library/service"
 	"github.com/joho/godotenv"
 	"github.com/sirupsen/logrus"
-	"net/http"
-	"os"
-	"time"
 )
 
 func main() {
@@ -18,22 +15,9 @@ func main() {
 		logrus.Fatalf("Error loading .env file: %s", err.Error())
 	}
 
-	router := mux.NewRouter()
-	router.HandleFunc("/api/health", func(w http.ResponseWriter, r *http.Request) {
-		err := json.NewEncoder(w).Encode(map[string]bool{"ok": true})
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			logrus.Errorf("Error encoding healthcheck response: %s", err.Error())
-		}
-	})
+	ctx := context.Background()
 
-	srv := &http.Server{
-		Addr:           ":" + os.Getenv("PORT"),
-		Handler:        router,
-		ReadTimeout:    10 * time.Second,
-		WriteTimeout:   10 * time.Second,
-		MaxHeaderBytes: 0,
-	}
+	srv := service.New()
 
-	logrus.Fatal(srv.ListenAndServe())
+	srv.Run(ctx)
 }
