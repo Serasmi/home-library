@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/Serasmi/home-library/internal/handler"
 	"github.com/Serasmi/home-library/internal/repository"
+	"github.com/Serasmi/home-library/internal/repository/mongorepo"
 	"github.com/Serasmi/home-library/internal/service"
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
@@ -27,7 +28,17 @@ func main() {
 
 	router := mux.NewRouter()
 
-	repos := repository.New()
+	mongoClient := mongorepo.New()
+	if err = mongoClient.Init(ctx); err != nil {
+		logrus.Fatalf("Error connecting mongo server: %s", err.Error())
+	}
+	defer func() {
+		if err := mongoClient.Close(ctx); err != nil {
+			logrus.Fatalf("Error closing mongo server: %s", err.Error())
+		}
+	}()
+
+	repos := repository.NewMongoRepository(mongoClient)
 	services := service.New(repos)
 	handlers := handler.New(services)
 
