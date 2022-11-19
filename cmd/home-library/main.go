@@ -2,13 +2,14 @@ package main
 
 import (
 	"context"
-	"github.com/Serasmi/home-library/internal/handler"
-	"github.com/Serasmi/home-library/internal/repository"
-	"github.com/Serasmi/home-library/internal/repository/mongorepo"
-	"github.com/Serasmi/home-library/internal/service"
-	"github.com/gorilla/mux"
+	"github.com/Serasmi/home-library/internal/api/books"
+	"github.com/Serasmi/home-library/internal/api/books/db"
+	"github.com/Serasmi/home-library/pkg/logging"
+	"github.com/Serasmi/home-library/pkg/mongodb"
 	"github.com/joho/godotenv"
+	"github.com/julienschmidt/httprouter"
 	"github.com/sirupsen/logrus"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -17,59 +18,83 @@ import (
 )
 
 func main() {
-	logrus.SetFormatter(new(logrus.JSONFormatter))
+	logger := logging.GetLogger()
 
 	err := godotenv.Load()
 	if err != nil {
-		logrus.Fatalf("Error loading .env file: %s", err.Error())
+		logger.Fatalf("Error loading .env file: %s", err.Error())
 	}
 
 	ctx := context.Background()
 
-	router := mux.NewRouter()
+	logger.Infof("Create router")
+	router := httprouter.New()
 
-	mongoClient := mongorepo.New()
+	/*mongoClient := mongorepo.New()
 	if err = mongoClient.Init(ctx); err != nil {
-		logrus.Fatalf("Error connecting mongo server: %s", err.Error())
+		logrus.Fatalf("Error connecting mongodb server: %s", err.Error())
 	}
 	defer func() {
 		if err := mongoClient.Close(ctx); err != nil {
-			logrus.Fatalf("Error closing mongo server: %s", err.Error())
+			logrus.Fatalf("Error closing mongodb server: %s", err.Error())
+		}
+	}()*/
+
+	mongoClient, err := mongodb.NewClient(ctx, "localhost", "27017", "admin", "admin", "HomeLibrary")
+	if err != nil {
+		logger.Fatalf("Error connecting mongodb server: %s", err.Error())
+	}
+	defer func() {
+		// TODO: make mongoClient closable and call Close method.
+		//  Close method should use context.WithTimeout().
+		if err := mongoClient.Disconnect(ctx); err != nil {
+			logger.Fatalf("Error closing mongodb server: %s", err.Error())
 		}
 	}()
 
-	repos := repository.NewMongoRepository(mongoClient)
-	services := service.New(repos)
-	handlers := handler.New(services)
+	booksStorage := db.NewMongoStorage(mongoClient.Database("HomeLibrary"), "books", logger)
+	booksService := books.NewService(booksStorage, logger)
+	booksHandler := books.NewHandler(booksService, logger)
+	booksHandler.Register(router)
 
-	router.Handle(handlers.HealthCheck())
-	router.Handle(handlers.GetAllBooks())
+	start(ctx, router, logger)
+}
+
+func start(ctx context.Context, router *httprouter.Router, logger logging.Logger) {
+	port := os.Getenv("PORT")
+
+	logger.Infof("Start application")
+
+	listener, err := net.Listen("tcp", ":"+port)
+	if err != nil {
+		panic(err)
+	}
 
 	srv := &http.Server{
-		Addr:           ":" + os.Getenv("PORT"),
-		Handler:        router,
-		ReadTimeout:    10 * time.Second,
-		WriteTimeout:   10 * time.Second,
-		MaxHeaderBytes: 0,
+		Handler:      router,
+		ReadTimeout:  15 * time.Second,
+		WriteTimeout: 15 * time.Second,
 	}
 
 	go func() {
-		// catch signal and invoke graceful termination
-		stop := make(chan os.Signal, 1)
-		signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
-		<-stop
-
-		c, cancel := context.WithTimeout(ctx, 15) // TODO: move wait timout to flag
-		defer cancel()
-
-		if err := srv.Shutdown(c); err != nil {
-			logrus.Fatal("HTTP server Shutdown: %s", err.Error())
+		if err := srv.Serve(listener); err != http.ErrServerClosed {
+			logger.Fatalf("Error listening server: %s", err.Error())
 		}
-
-		logrus.Info("Shutting down...")
 	}()
 
-	if err := srv.ListenAndServe(); err != http.ErrServerClosed {
-		logrus.Fatalf("Error listening server: %s", err.Error())
+	logger.Infof("Server is listening on 0.0.0.0:%s", port)
+
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
+	<-stop
+
+	c, cancel := context.WithTimeout(ctx, 3*time.Second)
+	defer cancel()
+
+	if err := srv.Shutdown(c); err != nil {
+		logrus.Fatal("HTTP server Shutdown: %s", err.Error())
 	}
+
+	logrus.Info("Shutting down...")
+
 }
