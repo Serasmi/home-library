@@ -1,6 +1,8 @@
 package books
 
 import (
+	"encoding/json"
+	"fmt"
 	"github.com/Serasmi/home-library/internal/handlers"
 	"github.com/Serasmi/home-library/pkg/logging"
 	"github.com/julienschmidt/httprouter"
@@ -9,57 +11,100 @@ import (
 
 const (
 	booksUrl = "/books"
-	bookUrl  = "/books/:uuid"
+	bookUrl  = "/books/:id"
 )
 
 type handler struct {
+	apiPath string
 	logger  logging.Logger
 	service Service
 }
 
-func NewHandler(service Service, logger logging.Logger) handlers.Handler {
-	return &handler{logger, service}
+func NewHandler(apiPath string, service Service, logger logging.Logger) handlers.Handler {
+	return &handler{apiPath, logger, service}
 }
 
 func (h *handler) Register(router *httprouter.Router) {
-	router.HandlerFunc(http.MethodGet, booksUrl, h.GetAll)
-	router.HandlerFunc(http.MethodGet, bookUrl, h.GetById)
-	router.HandlerFunc(http.MethodPost, bookUrl, h.Create)
-	router.HandlerFunc(http.MethodPatch, bookUrl, h.PartiallyUpdate)
-	router.HandlerFunc(http.MethodDelete, bookUrl, h.Delete)
+	router.HandlerFunc(http.MethodGet, h.api(booksUrl), h.GetAll)
+	router.HandlerFunc(http.MethodGet, h.api(bookUrl), h.GetById)
+	router.HandlerFunc(http.MethodPost, h.api(bookUrl), h.Create)
+	router.HandlerFunc(http.MethodPatch, h.api(bookUrl), h.PartiallyUpdate)
+	router.HandlerFunc(http.MethodDelete, h.api(bookUrl), h.Delete)
 }
 
 func (h *handler) GetAll(w http.ResponseWriter, r *http.Request) {
+	h.logger.Info("Get all books")
 	w.Header().Set("Content-Type", "application/json")
 
+	books, err := h.service.GetAll(r.Context())
+	if err != nil {
+		h.logger.Error(err)
+	}
+
+	booksBytes, err := json.Marshal(books)
+	if err != nil {
+		h.logger.Error(err)
+	}
+
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Need to implement method GetAll"))
+	w.Write(booksBytes)
 }
 
 func (h *handler) GetById(w http.ResponseWriter, r *http.Request) {
+	h.logger.Info("Get book by id")
 	w.Header().Set("Content-Type", "application/json")
 
+	id, err := handlers.RequestId(r, h.logger)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprint(w, "id parameter is required in request path")
+		return
+	}
+
+	book, err := h.service.GetById(r.Context(), id)
+	if err != nil {
+		h.logger.Error(err)
+	}
+
+	bookBytes, err := json.Marshal(book)
+	if err != nil {
+		h.logger.Error(err)
+	}
+
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Need to implement method GetById"))
+	w.Write(bookBytes)
 }
 
 func (h *handler) Create(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
 	w.WriteHeader(http.StatusCreated)
 	w.Write([]byte("Need to implement method Create"))
 }
 
 func (h *handler) PartiallyUpdate(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Need to implement method PartiallyUpdate"))
 }
 
 func (h *handler) Delete(w http.ResponseWriter, r *http.Request) {
+	h.logger.Info("Delete book")
 	w.Header().Set("Content-Type", "application/json")
 
+	id, err := handlers.RequestId(r, h.logger)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprint(w, "id parameter is required in request path")
+		return
+	}
+
+	if err = h.service.Delete(r.Context(), id); err != nil {
+		h.logger.Error(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
 	w.WriteHeader(http.StatusNoContent)
-	w.Write([]byte("Need to implement method Delete"))
+}
+
+func (h *handler) api(path string) string {
+	return h.apiPath + path
 }

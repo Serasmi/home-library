@@ -5,8 +5,12 @@ import (
 	"github.com/Serasmi/home-library/pkg/logging"
 )
 
+var _ Service = &service{}
+
 type Service interface {
 	GetAll(ctx context.Context) ([]Book, error)
+	GetById(ctx context.Context, id string) (Book, error)
+	Delete(ctx context.Context, id string) error
 }
 
 type service struct {
@@ -21,4 +25,14 @@ func NewService(storage Storage, logger logging.Logger) Service {
 func (s *service) GetAll(ctx context.Context) ([]Book, error) {
 	// TODO: implement
 	return s.storage.Find(ctx)
+}
+
+func (s *service) GetById(ctx context.Context, id string) (Book, error) {
+	//TODO implement me
+	return s.storage.FindOne(ctx, id)
+}
+
+func (s *service) Delete(ctx context.Context, id string) error {
+	//TODO implement me
+	return s.storage.Remove(ctx, id)
 }

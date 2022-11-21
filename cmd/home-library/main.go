@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/Serasmi/home-library/internal/api/books"
 	"github.com/Serasmi/home-library/internal/api/books/db"
+	apiRouter "github.com/Serasmi/home-library/internal/router"
 	"github.com/Serasmi/home-library/pkg/logging"
 	"github.com/Serasmi/home-library/pkg/mongodb"
 	"github.com/joho/godotenv"
@@ -17,6 +18,8 @@ import (
 	"time"
 )
 
+const apiPath = "/api"
+
 func main() {
 	logger := logging.GetLogger()
 
@@ -26,19 +29,7 @@ func main() {
 	}
 
 	ctx := context.Background()
-
-	logger.Infof("Create router")
-	router := httprouter.New()
-
-	/*mongoClient := mongorepo.New()
-	if err = mongoClient.Init(ctx); err != nil {
-		logrus.Fatalf("Error connecting mongodb server: %s", err.Error())
-	}
-	defer func() {
-		if err := mongoClient.Close(ctx); err != nil {
-			logrus.Fatalf("Error closing mongodb server: %s", err.Error())
-		}
-	}()*/
+	router := apiRouter.NewRouter(logger)
 
 	mongoClient, err := mongodb.NewClient(ctx, "localhost", "27017", "admin", "admin", "HomeLibrary")
 	if err != nil {
@@ -54,7 +45,7 @@ func main() {
 
 	booksStorage := db.NewMongoStorage(mongoClient.Database("HomeLibrary"), "books", logger)
 	booksService := books.NewService(booksStorage, logger)
-	booksHandler := books.NewHandler(booksService, logger)
+	booksHandler := books.NewHandler(apiPath, booksService, logger)
 	booksHandler.Register(router)
 
 	start(ctx, router, logger)
