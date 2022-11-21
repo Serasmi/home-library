@@ -76,8 +76,34 @@ func (h *handler) GetById(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *handler) Create(w http.ResponseWriter, r *http.Request) {
+	h.logger.Info("Create new book")
+	w.Header().Set("Content-Type", "application/json")
+
+	h.logger.Debug("Decode create book dto")
+	var dto CreateBookDto
+	defer r.Body.Close()
+	if err := json.NewDecoder(r.Body).Decode(&dto); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprint(w, "invalid data")
+		return
+	}
+
+	id, err := h.service.Create(r.Context(), dto)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprint(w, "creating entity server error")
+		return
+	}
+
+	resDto, err := json.Marshal(CreateBookResponseDto{id})
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprint(w, "creating entity server error")
+		return
+	}
+
 	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte("Need to implement method Create"))
+	w.Write(resDto)
 }
 
 func (h *handler) PartiallyUpdate(w http.ResponseWriter, r *http.Request) {

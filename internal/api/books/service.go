@@ -10,6 +10,7 @@ var _ Service = &service{}
 type Service interface {
 	GetAll(ctx context.Context) ([]Book, error)
 	GetById(ctx context.Context, id string) (Book, error)
+	Create(ctx context.Context, dto CreateBookDto) (string, error)
 	Delete(ctx context.Context, id string) error
 }
 
@@ -30,6 +31,11 @@ func (s *service) GetAll(ctx context.Context) ([]Book, error) {
 func (s *service) GetById(ctx context.Context, id string) (Book, error) {
 	//TODO implement me
 	return s.storage.FindOne(ctx, id)
+}
+
+func (s *service) Create(ctx context.Context, dto CreateBookDto) (string, error) {
+	//TODO implement me
+	return s.storage.Insert(ctx, newBook(dto))
 }
 
 func (s *service) Delete(ctx context.Context, id string) error {

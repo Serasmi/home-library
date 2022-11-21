@@ -55,6 +55,11 @@ func (s *mockStorage) FindOne(_ context.Context, id string) (b books.Book, err e
 	return b, errors.New("book not found")
 }
 
+func (s *mockStorage) Insert(_ context.Context, book books.Book) (string, error) {
+	s.books = append(s.books, book)
+	return book.Id, nil
+}
+
 func (s *mockStorage) Remove(_ context.Context, id string) error {
 	for i, b := range s.books {
 		if b.Id == id {

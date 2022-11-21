@@ -31,6 +31,11 @@ func (d *db) FindOne(ctx context.Context, id string) (books.Book, error) {
 	}, nil
 }
 
+func (d *db) Insert(ctx context.Context, book books.Book) (string, error) {
+	//TODO implement me
+	return book.Id, nil
+}
+
 func (d *db) Remove(ctx context.Context, id string) error {
 	//TODO implement me
 	return nil
