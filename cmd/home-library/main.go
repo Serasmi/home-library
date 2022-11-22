@@ -44,6 +44,7 @@ func main() {
 	}()
 
 	booksStorage := db.NewMongoStorage(mongoClient.Database("HomeLibrary"), "books", logger)
+	//booksStorage := db.NewMockStorage(logger)
 	booksService := books.NewService(booksStorage, logger)
 	booksHandler := books.NewHandler(apiPath, booksService, logger)
 	booksHandler.Register(router)

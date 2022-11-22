@@ -60,6 +60,12 @@ func (s *mockStorage) Insert(_ context.Context, book books.Book) (string, error)
 	return book.Id, nil
 }
 
+func (s *mockStorage) Update(_ context.Context, book books.Book) error {
+	// TODO: implement
+	s.logger.Debug("Update method not implemented")
+	return nil
+}
+
 func (s *mockStorage) Remove(_ context.Context, id string) error {
 	for i, b := range s.books {
 		if b.Id == id {

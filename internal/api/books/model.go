@@ -20,6 +20,22 @@ type CreateBookDto struct {
 	Author string `json:"author"`
 }
 
+func updateBook(dto UpdateBookDto) Book {
+	return Book{
+		Id:     dto.Id,
+		Title:  dto.Title,
+		Author: dto.Author,
+		Read:   dto.Read,
+	}
+}
+
+type UpdateBookDto struct {
+	Id     string `json:"id"`
+	Title  string `json:"title,omitempty"`
+	Author string `json:"author,omitempty"`
+	Read   bool   `json:"read,omitempty"`
+}
+
 type CreateBookResponseDto struct {
 	Id string `json:"id"`
 }

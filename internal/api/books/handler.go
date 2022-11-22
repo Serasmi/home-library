@@ -107,8 +107,26 @@ func (h *handler) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *handler) PartiallyUpdate(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Need to implement method PartiallyUpdate"))
+	h.logger.Info("Partially update book")
+	w.Header().Set("Content-Type", "application/json")
+
+	h.logger.Debug("Decode update book dto")
+	var dto UpdateBookDto
+	defer r.Body.Close()
+	if err := json.NewDecoder(r.Body).Decode(&dto); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprint(w, "invalid data")
+		return
+	}
+
+	err := h.service.Update(r.Context(), dto)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprint(w, "updating entity server error")
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (h *handler) Delete(w http.ResponseWriter, r *http.Request) {

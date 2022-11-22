@@ -11,6 +11,7 @@ type Service interface {
 	GetAll(ctx context.Context) ([]Book, error)
 	GetById(ctx context.Context, id string) (Book, error)
 	Create(ctx context.Context, dto CreateBookDto) (string, error)
+	Update(ctx context.Context, dto UpdateBookDto) error
 	Delete(ctx context.Context, id string) error
 }
 
@@ -36,6 +37,11 @@ func (s *service) GetById(ctx context.Context, id string) (Book, error) {
 func (s *service) Create(ctx context.Context, dto CreateBookDto) (string, error) {
 	//TODO implement me
 	return s.storage.Insert(ctx, newBook(dto))
+}
+
+func (s *service) Update(ctx context.Context, dto UpdateBookDto) error {
+	//TODO implement me
+	return s.storage.Update(ctx, updateBook(dto))
 }
 
 func (s *service) Delete(ctx context.Context, id string) error {

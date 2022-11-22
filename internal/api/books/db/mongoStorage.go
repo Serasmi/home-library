@@ -36,6 +36,11 @@ func (d *db) Insert(ctx context.Context, book books.Book) (string, error) {
 	return book.Id, nil
 }
 
+func (d *db) Update(ctx context.Context, book books.Book) error {
+	//TODO implement me
+	return nil
+}
+
 func (d *db) Remove(ctx context.Context, id string) error {
 	//TODO implement me
 	return nil
