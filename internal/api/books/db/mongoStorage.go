@@ -66,9 +66,23 @@ func (d *db) FindOne(ctx context.Context, id string) (b books.Book, err error) {
 	return b, nil
 }
 
-func (d *db) Insert(ctx context.Context, book books.Book) (string, error) {
-	//TODO implement me
-	return book.Id, nil
+func (d *db) Insert(ctx context.Context, book books.Book) (id string, err error) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	result, err := d.collection.InsertOne(ctx, book)
+	if err != nil {
+		return id, fmt.Errorf("failed to create new book. error: %w", err)
+	}
+
+	bookId, ok := result.InsertedID.(primitive.ObjectID)
+	if !ok {
+		return id, fmt.Errorf("failed to convet objectid to hex")
+	}
+
+	id = bookId.Hex()
+
+	return id, nil
 }
 
 func (d *db) Update(ctx context.Context, book books.Book) error {
