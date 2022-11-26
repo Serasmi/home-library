@@ -27,7 +27,7 @@ func NewHandler(apiPath string, service Service, logger logging.Logger) handlers
 func (h *handler) Register(router *httprouter.Router) {
 	router.HandlerFunc(http.MethodGet, h.api(booksUrl), h.GetAll)
 	router.HandlerFunc(http.MethodGet, h.api(bookUrl), h.GetById)
-	router.HandlerFunc(http.MethodPost, h.api(bookUrl), h.Create)
+	router.HandlerFunc(http.MethodPost, h.api(booksUrl), h.Create)
 	router.HandlerFunc(http.MethodPatch, h.api(bookUrl), h.PartiallyUpdate)
 	router.HandlerFunc(http.MethodDelete, h.api(bookUrl), h.Delete)
 }
