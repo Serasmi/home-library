@@ -72,7 +72,7 @@ func (d *db) Insert(ctx context.Context, book books.Book) (id string, err error)
 
 	result, err := d.collection.InsertOne(ctx, book)
 	if err != nil {
-		return id, fmt.Errorf("failed to create new book. error: %w", err)
+		return "", fmt.Errorf("failed to execute query. error: %w", err)
 	}
 
 	bookId, ok := result.InsertedID.(primitive.ObjectID)
@@ -91,6 +91,24 @@ func (d *db) Update(ctx context.Context, book books.Book) error {
 }
 
 func (d *db) Remove(ctx context.Context, id string) error {
-	//TODO implement me
+	objectId, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return fmt.Errorf("failed to convert hex to objectId. error: %w", err)
+	}
+
+	filter := bson.M{"_id": objectId}
+
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	result, err := d.collection.DeleteOne(ctx, filter)
+	if err != nil {
+		return fmt.Errorf("failed to execute query")
+	}
+
+	if result.DeletedCount == 0 {
+		return fmt.Errorf("book not found")
+	}
+
 	return nil
 }
