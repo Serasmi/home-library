@@ -41,7 +41,7 @@ func (s *service) Create(ctx context.Context, dto CreateBookDto) (string, error)
 
 func (s *service) Update(ctx context.Context, dto UpdateBookDto) error {
 	//TODO implement me
-	return s.storage.Update(ctx, updateBook(dto))
+	return s.storage.Update(ctx, dto)
 }
 
 func (s *service) Delete(ctx context.Context, id string) error {

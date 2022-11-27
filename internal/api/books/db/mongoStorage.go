@@ -86,7 +86,7 @@ func (d *db) Insert(ctx context.Context, book books.Book) (id string, err error)
 	return id, nil
 }
 
-func (d *db) Update(ctx context.Context, book books.Book) error {
+func (d *db) Update(ctx context.Context, book books.UpdateBookDto) error {
 	id, err := primitive.ObjectIDFromHex(book.Id)
 	if err != nil {
 		return fmt.Errorf("failed to convert hex to objectId. error: %w", err)

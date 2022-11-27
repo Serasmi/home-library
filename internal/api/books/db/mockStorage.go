@@ -60,7 +60,7 @@ func (s *mockStorage) Insert(_ context.Context, book books.Book) (string, error)
 	return book.Id, nil
 }
 
-func (s *mockStorage) Update(_ context.Context, book books.Book) error {
+func (s *mockStorage) Update(_ context.Context, book books.UpdateBookDto) error {
 	// TODO: implement
 	s.logger.Debug("Update method not implemented")
 	return nil
