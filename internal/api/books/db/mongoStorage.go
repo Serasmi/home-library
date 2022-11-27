@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/Serasmi/home-library/internal/api/books"
@@ -86,7 +87,41 @@ func (d *db) Insert(ctx context.Context, book books.Book) (id string, err error)
 }
 
 func (d *db) Update(ctx context.Context, book books.Book) error {
-	//TODO implement me
+	id, err := primitive.ObjectIDFromHex(book.Id)
+	if err != nil {
+		return fmt.Errorf("failed to convert hex to objectId. error: %w", err)
+	}
+
+	filter := bson.M{"_id": id}
+
+	bookByte, err := json.Marshal(book)
+	if err != nil {
+		return fmt.Errorf("failed to marshal document. error: %w", err)
+	}
+
+	var updateObj bson.M
+	err = json.Unmarshal(bookByte, &updateObj)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal document. error: %w", err)
+	}
+
+	delete(updateObj, "_id")
+
+	d.logger.Debug(fmt.Sprintf("updateObj: %#v", updateObj))
+
+	update := bson.M{"$set": updateObj}
+
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	result, err := d.collection.UpdateOne(ctx, filter, update)
+	if err != nil {
+		return fmt.Errorf("failed to execute query. error: %w", err)
+	}
+	if result.MatchedCount == 0 {
+		return errors.New("book not found")
+	}
+
 	return nil
 }
 

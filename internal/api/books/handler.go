@@ -110,6 +110,13 @@ func (h *handler) PartiallyUpdate(w http.ResponseWriter, r *http.Request) {
 	h.logger.Info("Partially update book")
 	w.Header().Set("Content-Type", "application/json")
 
+	id, err := handlers.RequestId(r, h.logger)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprint(w, "id parameter is required in request path")
+		return
+	}
+
 	h.logger.Debug("Decode update book dto")
 	var dto UpdateBookDto
 	defer r.Body.Close()
@@ -119,7 +126,9 @@ func (h *handler) PartiallyUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := h.service.Update(r.Context(), dto)
+	dto.Id = id
+
+	err = h.service.Update(r.Context(), dto)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprint(w, "updating entity server error")

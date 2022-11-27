@@ -30,10 +30,10 @@ func updateBook(dto UpdateBookDto) Book {
 }
 
 type UpdateBookDto struct {
-	Id     string `json:"id"`
-	Title  string `json:"title,omitempty"`
-	Author string `json:"author,omitempty"`
-	Read   bool   `json:"read,omitempty"`
+	Id     string `json:"id" bson:"_id,omitempty"`
+	Title  string `json:"title,omitempty" bson:"title,omitempty"`
+	Author string `json:"author,omitempty" bson:"author,omitempty"`
+	Read   bool   `json:"read,omitempty" bson:"read,omitempty"`
 }
 
 type CreateBookResponseDto struct {
