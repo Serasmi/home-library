@@ -6,6 +6,7 @@ import (
 	"github.com/Serasmi/home-library/internal/handlers"
 	"github.com/Serasmi/home-library/pkg/logging"
 	"github.com/julienschmidt/httprouter"
+	"go.mongodb.org/mongo-driver/mongo"
 	"net/http"
 )
 
@@ -25,11 +26,11 @@ func NewHandler(apiPath string, service Service, logger logging.Logger) handlers
 }
 
 func (h *handler) Register(router *httprouter.Router) {
-	router.HandlerFunc(http.MethodGet, h.api(booksUrl), h.GetAll)
-	router.HandlerFunc(http.MethodGet, h.api(bookUrl), h.GetById)
-	router.HandlerFunc(http.MethodPost, h.api(booksUrl), h.Create)
-	router.HandlerFunc(http.MethodPatch, h.api(bookUrl), h.PartiallyUpdate)
-	router.HandlerFunc(http.MethodDelete, h.api(bookUrl), h.Delete)
+	router.HandlerFunc(http.MethodGet, h.apiPath+booksUrl, h.GetAll)
+	router.HandlerFunc(http.MethodGet, h.apiPath+bookUrl, h.GetById)
+	router.HandlerFunc(http.MethodPost, h.apiPath+booksUrl, h.Create)
+	router.HandlerFunc(http.MethodPatch, h.apiPath+bookUrl, h.PartiallyUpdate)
+	router.HandlerFunc(http.MethodDelete, h.apiPath+bookUrl, h.Delete)
 }
 
 func (h *handler) GetAll(w http.ResponseWriter, r *http.Request) {
@@ -91,6 +92,13 @@ func (h *handler) Create(w http.ResponseWriter, r *http.Request) {
 	id, err := h.service.Create(r.Context(), dto)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
+		h.logger.Error(err)
+
+		if mongo.IsDuplicateKeyError(err) {
+			fmt.Fprint(w, "duplicated key")
+			return
+		}
+
 		fmt.Fprint(w, "creating entity server error")
 		return
 	}
@@ -156,8 +164,4 @@ func (h *handler) Delete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusNoContent)
-}
-
-func (h *handler) api(path string) string {
-	return h.apiPath + path
 }
