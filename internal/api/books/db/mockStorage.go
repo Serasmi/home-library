@@ -22,19 +22,19 @@ func NewMockStorage(logger logging.Logger) books.Storage {
 func initBooks() []books.Book {
 	return []books.Book{
 		{
-			Id:     "1",
+			ID:     "1",
 			Title:  "War and Peace",
 			Author: "Leo Tolstoy",
 			Read:   false,
 		},
 		{
-			Id:     "2",
+			ID:     "2",
 			Title:  "The Brothers Karamazov",
 			Author: "Fyodor Dostoevsky",
 			Read:   false,
 		},
 		{
-			Id:     "3",
+			ID:     "3",
 			Title:  "The Master and Margarita",
 			Author: "Mikhail Bulgakov",
 			Read:   false,
@@ -48,16 +48,17 @@ func (s *mockStorage) Find(_ context.Context) ([]books.Book, error) {
 
 func (s *mockStorage) FindOne(_ context.Context, id string) (b books.Book, err error) {
 	for _, b := range s.books {
-		if b.Id == id {
+		if b.ID == id {
 			return b, nil
 		}
 	}
+
 	return b, errors.New("book not found")
 }
 
 func (s *mockStorage) Insert(_ context.Context, book books.Book) (string, error) {
 	s.books = append(s.books, book)
-	return book.Id, nil
+	return book.ID, nil
 }
 
 func (s *mockStorage) Update(_ context.Context, book books.UpdateBookDto) error {
@@ -68,10 +69,11 @@ func (s *mockStorage) Update(_ context.Context, book books.UpdateBookDto) error 
 
 func (s *mockStorage) Remove(_ context.Context, id string) error {
 	for i, b := range s.books {
-		if b.Id == id {
+		if b.ID == id {
 			s.books = append(s.books[:i], s.books[i+1:]...)
 			return nil
 		}
 	}
+
 	return errors.New("book not found")
 }

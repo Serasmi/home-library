@@ -2,17 +2,19 @@ package handlers
 
 import (
 	"errors"
+	"net/http"
+
 	"github.com/Serasmi/home-library/pkg/logging"
 	"github.com/julienschmidt/httprouter"
-	"net/http"
 )
 
 type Handler interface {
 	Register(router *httprouter.Router)
 }
 
-func RequestId(r *http.Request, logger logging.Logger) (string, error) {
+func RequestID(r *http.Request, logger logging.Logger) (string, error) {
 	logger.Debug("Get id from request params")
+
 	params := httprouter.ParamsFromContext(r.Context())
 	id := params.ByName("id")
 

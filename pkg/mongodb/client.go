@@ -10,11 +10,12 @@ import (
 
 func NewClient(ctx context.Context, host, port, username, password, authSource string) (*mongo.Client, error) {
 	var url string
+
 	_ = authSource
-	//var anonymous bool
+	// var anonymous bool
 
 	if username == "" || password == "" {
-		//anonymous = true
+		// anonymous = true
 		url = fmt.Sprintf("mongodb://%s:%s", host, port)
 	} else {
 		url = fmt.Sprintf("mongodb://%s:%s@%s:%s", username, password, host, port)

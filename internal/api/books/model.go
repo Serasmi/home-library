@@ -1,7 +1,7 @@
 package books
 
 type Book struct {
-	Id     string `json:"id" bson:"_id,omitempty"`
+	ID     string `json:"id" bson:"_id,omitempty"`
 	Title  string `json:"title" bson:"title,omitempty"`
 	Author string `json:"author" bson:"author,omitempty"`
 	Read   bool   `json:"read" bson:"read,omitempty"`
@@ -21,12 +21,12 @@ type CreateBookDto struct {
 }
 
 type UpdateBookDto struct {
-	Id     string `json:"id" bson:"_id,omitempty"`
+	ID     string `json:"id" bson:"_id,omitempty"`
 	Title  string `json:"title,omitempty" bson:"title,omitempty"`
 	Author string `json:"author,omitempty" bson:"author,omitempty"`
 	Read   bool   `json:"read,omitempty" bson:"read,omitempty"`
 }
 
 type CreateBookResponseDto struct {
-	Id string `json:"id"`
+	ID string `json:"id"`
 }

@@ -2,6 +2,13 @@ package main
 
 import (
 	"context"
+	"net"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
 	"github.com/Serasmi/home-library/internal/api/books"
 	"github.com/Serasmi/home-library/internal/api/books/db"
 	apiRouter "github.com/Serasmi/home-library/internal/router"
@@ -10,12 +17,6 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/julienschmidt/httprouter"
 	"github.com/sirupsen/logrus"
-	"net"
-	"net/http"
-	"os"
-	"os/signal"
-	"syscall"
-	"time"
 )
 
 const apiPath = "/api"
@@ -35,6 +36,7 @@ func main() {
 	if err != nil {
 		logger.Fatalf("Error connecting mongodb server: %s", err.Error())
 	}
+
 	defer func() {
 		// TODO: make mongoClient closable and call Close method.
 		//  Close method should use context.WithTimeout().
@@ -44,7 +46,7 @@ func main() {
 	}()
 
 	booksStorage := db.NewMongoStorage(mongoClient.Database("HomeLibrary"), "books", logger)
-	//booksStorage := db.NewMockStorage(logger)
+	// booksStorage := db.NewMockStorage(logger)
 	booksService := books.NewService(booksStorage, logger)
 	booksHandler := books.NewHandler(apiPath, booksService, logger)
 	booksHandler.Register(router)
@@ -84,9 +86,8 @@ func start(ctx context.Context, router *httprouter.Router, logger logging.Logger
 	defer cancel()
 
 	if err := srv.Shutdown(c); err != nil {
-		logrus.Fatal("HTTP server Shutdown: %s", err.Error())
+		logrus.Fatalf("HTTP server Shutdown: %s", err.Error())
 	}
 
 	logrus.Info("Shutting down...")
-
 }

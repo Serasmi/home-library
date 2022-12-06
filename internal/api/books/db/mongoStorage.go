@@ -31,6 +31,7 @@ func (d *db) Find(ctx context.Context) (books []books.Book, err error) {
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			return books, errors.New("books not found")
 		}
+
 		return books, fmt.Errorf("failed to execute query. error: %w", err)
 	}
 
@@ -42,12 +43,12 @@ func (d *db) Find(ctx context.Context) (books []books.Book, err error) {
 }
 
 func (d *db) FindOne(ctx context.Context, id string) (b books.Book, err error) {
-	objectId, err := primitive.ObjectIDFromHex(id)
+	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		return b, fmt.Errorf("failed to convert hex to objectId. error: %w", err)
+		return b, fmt.Errorf("failed to convert hex to objectID. error: %w", err)
 	}
 
-	filter := bson.M{"_id": objectId}
+	filter := bson.M{"_id": objectID}
 
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
@@ -57,6 +58,7 @@ func (d *db) FindOne(ctx context.Context, id string) (b books.Book, err error) {
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			return b, errors.New("book not found")
 		}
+
 		return b, fmt.Errorf("failed to execute query. error: %w", err)
 	}
 
@@ -76,18 +78,18 @@ func (d *db) Insert(ctx context.Context, book books.Book) (id string, err error)
 		return "", fmt.Errorf("failed to execute query. error: %w", err)
 	}
 
-	bookId, ok := result.InsertedID.(primitive.ObjectID)
+	bookID, ok := result.InsertedID.(primitive.ObjectID)
 	if !ok {
 		return id, fmt.Errorf("failed to convet objectid to hex")
 	}
 
-	id = bookId.Hex()
+	id = bookID.Hex()
 
 	return id, nil
 }
 
 func (d *db) Update(ctx context.Context, book books.UpdateBookDto) error {
-	id, err := primitive.ObjectIDFromHex(book.Id)
+	id, err := primitive.ObjectIDFromHex(book.ID)
 	if err != nil {
 		return fmt.Errorf("failed to convert hex to objectId. error: %w", err)
 	}
@@ -100,6 +102,7 @@ func (d *db) Update(ctx context.Context, book books.UpdateBookDto) error {
 	}
 
 	var updateObj bson.M
+
 	err = json.Unmarshal(bookByte, &updateObj)
 	if err != nil {
 		return fmt.Errorf("failed to unmarshal document. error: %w", err)
@@ -118,6 +121,7 @@ func (d *db) Update(ctx context.Context, book books.UpdateBookDto) error {
 	if err != nil {
 		return fmt.Errorf("failed to execute query. error: %w", err)
 	}
+
 	if result.MatchedCount == 0 {
 		return errors.New("book not found")
 	}
@@ -126,12 +130,12 @@ func (d *db) Update(ctx context.Context, book books.UpdateBookDto) error {
 }
 
 func (d *db) Remove(ctx context.Context, id string) error {
-	objectId, err := primitive.ObjectIDFromHex(id)
+	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		return fmt.Errorf("failed to convert hex to objectId. error: %w", err)
+		return fmt.Errorf("failed to convert hex to objectID. error: %w", err)
 	}
 
-	filter := bson.M{"_id": objectId}
+	filter := bson.M{"_id": objectID}
 
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
