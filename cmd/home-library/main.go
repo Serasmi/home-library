@@ -11,6 +11,7 @@ import (
 
 	"github.com/Serasmi/home-library/internal/api/books"
 	"github.com/Serasmi/home-library/internal/api/books/db"
+	"github.com/Serasmi/home-library/internal/api/health"
 	apiRouter "github.com/Serasmi/home-library/internal/router"
 	"github.com/Serasmi/home-library/pkg/logging"
 	"github.com/Serasmi/home-library/pkg/mongodb"
@@ -44,6 +45,9 @@ func main() {
 			logger.Fatalf("Error closing mongodb server: %s", err.Error())
 		}
 	}()
+
+	healthHandler := health.NewHandler(apiPath)
+	healthHandler.Register(router)
 
 	booksStorage := db.NewMongoStorage(mongoClient.Database("HomeLibrary"), "books", logger)
 	// booksStorage := db.NewMockStorage(logger)
