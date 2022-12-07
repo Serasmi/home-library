@@ -19,11 +19,12 @@ const (
 var _ handlers.Handler = &authHandler{}
 
 type authHandler struct {
-	logger logging.Logger
+	userService *user.Service
+	logger      logging.Logger
 }
 
-func NewHandler(logger logging.Logger) handlers.Handler {
-	return &authHandler{logger}
+func NewHandler(userService *user.Service, logger logging.Logger) handlers.Handler {
+	return &authHandler{userService, logger}
 }
 
 func (h *authHandler) Register(router *httprouter.Router) {
@@ -50,6 +51,16 @@ func (h *authHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	err = h.userService.CheckUser(r.Context(), dto.Username, dto.Password)
+	if err != nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		_, _ = w.Write([]byte("Invalid username or password"))
+
+		h.logger.Error("Authorization error", err)
+
+		return
+	}
+
 	token, err := jwt.CreateToken(&dto)
 	if err != nil {
 		h.logger.Error(err)
@@ -58,6 +69,14 @@ func (h *authHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	respDTO, err := json.Marshal(LoginResponseDto{token})
+	if err != nil {
+		h.logger.Error("encoding response error", err)
+		w.WriteHeader(http.StatusInternalServerError)
+
+		return
+	}
+
 	w.WriteHeader(http.StatusOK)
-	_, _ = w.Write([]byte(token))
+	_, _ = w.Write(respDTO)
 }

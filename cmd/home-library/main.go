@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"log"
 	"net"
 	"net/http"
 	"os"
@@ -9,10 +10,13 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/Serasmi/home-library/internal/config"
+
+	"github.com/Serasmi/home-library/internal/user"
+
 	"github.com/Serasmi/home-library/internal/auth"
 
 	"github.com/Serasmi/home-library/internal/api/books"
-	"github.com/Serasmi/home-library/internal/api/books/db"
 	"github.com/Serasmi/home-library/internal/api/health"
 	apiRouter "github.com/Serasmi/home-library/internal/router"
 	"github.com/Serasmi/home-library/pkg/logging"
@@ -22,7 +26,11 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-const apiPath = "/api"
+const (
+	apiPath         = "/api"
+	booksCollection = "books"
+	usersCollection = "users"
+)
 
 func main() {
 	logger := logging.GetLogger()
@@ -32,10 +40,12 @@ func main() {
 		logger.Fatalf("Error loading .env file: %s", err.Error())
 	}
 
+	cfg := mustConfig()
+
 	ctx := context.Background()
 	router := apiRouter.NewRouter(logger)
 
-	mongoClient, err := mongodb.NewClient(ctx, "localhost", "27017", "admin", "admin", "HomeLibrary")
+	mongoClient, err := mongodb.NewClient(ctx, cfg.DB.Host, cfg.DB.Port, cfg.DB.Username, cfg.DB.Password, cfg.DB.Name)
 	if err != nil {
 		logger.Fatalf("Error connecting mongodb server: %s", err.Error())
 	}
@@ -48,27 +58,33 @@ func main() {
 		}
 	}()
 
-	authHandler := auth.NewHandler(logger)
+	userStorage := user.NewMongoStorage(mongoClient.Database(cfg.DB.Name), usersCollection, logger)
+	userService := user.NewService(userStorage, logger)
+
+	authHandler := auth.NewHandler(userService, logger)
 	authHandler.Register(router)
 
-	healthHandler := health.NewHandler(apiPath)
-	healthHandler.Register(router)
-
-	booksStorage := db.NewMongoStorage(mongoClient.Database("HomeLibrary"), "books", logger)
+	booksStorage := books.NewMongoStorage(mongoClient.Database(cfg.DB.Name), booksCollection, logger)
 	// booksStorage := db.NewMockStorage(logger)
 	booksService := books.NewService(booksStorage, logger)
 	booksHandler := books.NewHandler(apiPath, booksService, logger)
 	booksHandler.Register(router)
 
-	start(ctx, router, logger)
+	healthHandler := health.NewHandler(apiPath)
+	healthHandler.Register(router)
+
+	start(ctx, router, logger, cfg)
 }
 
-func start(ctx context.Context, router *httprouter.Router, logger logging.Logger) {
-	port := os.Getenv("PORT")
-
+func start(ctx context.Context, router *httprouter.Router, logger logging.Logger, cfg *config.Config) {
 	logger.Infof("Start application")
 
-	listener, err := net.Listen("tcp", ":"+port)
+	var host string
+	if cfg.App.Host != "" {
+		host = cfg.App.Host
+	}
+
+	listener, err := net.Listen("tcp", host+":"+cfg.App.Port)
 	if err != nil {
 		panic(err)
 	}
@@ -85,7 +101,7 @@ func start(ctx context.Context, router *httprouter.Router, logger logging.Logger
 		}
 	}()
 
-	logger.Infof("Server is listening on 0.0.0.0:%s", port)
+	logger.Infof("Server is listening on %s:%s", host, cfg.App.Port)
 
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
@@ -99,4 +115,44 @@ func start(ctx context.Context, router *httprouter.Router, logger logging.Logger
 	}
 
 	logrus.Info("Shutting down...")
+}
+
+func mustConfig() *config.Config {
+	appConfig := config.AppConfig{}
+
+	appConfig.Host = os.Getenv("APP_HOST")
+
+	appConfig.Port = os.Getenv("APP_PORT")
+	if appConfig.Port == "" {
+		log.Fatal("You must set your 'APP_PORT' environmental variable.")
+	}
+
+	dbConfig := config.DBConfig{}
+
+	dbConfig.Host = os.Getenv("MONGODB_HOST")
+	if dbConfig.Host == "" {
+		log.Fatal("You must set your 'MONGODB_HOST' environmental variable. See\n\t https://www.mongodb.com/docs/drivers/go/current/usage-examples/#environment-variable")
+	}
+
+	dbConfig.Port = os.Getenv("MONGODB_PORT")
+	if dbConfig.Port == "" {
+		log.Fatal("You must set your 'MONGODB_PORT' environmental variable. See\n\t https://www.mongodb.com/docs/drivers/go/current/usage-examples/#environment-variable")
+	}
+
+	dbConfig.Name = os.Getenv("MONGODB_DATABASE")
+	if dbConfig.Name == "" {
+		log.Fatal("You must set your 'MONGODB_DATABASE' environmental variable. See\n\t https://www.mongodb.com/docs/drivers/go/current/usage-examples/#environment-variable")
+	}
+
+	dbConfig.Username = os.Getenv("MONGODB_USERNAME")
+	if dbConfig.Username == "" {
+		log.Fatal("You must set your 'MONGODB_USERNAME' environmental variable. See\n\t https://www.mongodb.com/docs/drivers/go/current/usage-examples/#environment-variable")
+	}
+
+	dbConfig.Password = os.Getenv("MONGODB_PASSWORD")
+	if dbConfig.Password == "" {
+		log.Fatal("You must set your 'MONGODB_PASSWORD' environmental variable. See\n\t https://www.mongodb.com/docs/drivers/go/current/usage-examples/#environment-variable")
+	}
+
+	return &config.Config{App: appConfig, DB: dbConfig}
 }

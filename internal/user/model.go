@@ -6,5 +6,6 @@ type LoginUserDto struct {
 }
 
 type User struct {
-	Username string
+	Username     string `json:"username"`
+	PasswordHash string `json:"passwordHash"`
 }

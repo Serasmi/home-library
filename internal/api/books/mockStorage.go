@@ -1,26 +1,26 @@
-package db
+package books
 
 import (
 	"context"
 	"errors"
-	"github.com/Serasmi/home-library/internal/api/books"
+
 	"github.com/Serasmi/home-library/pkg/logging"
 )
 
 type mockStorage struct {
-	books  []books.Book
+	books  []Book
 	logger logging.Logger
 }
 
-func NewMockStorage(logger logging.Logger) books.Storage {
+func NewMockStorage(logger logging.Logger) Storage {
 	return &mockStorage{
 		books:  initBooks(),
 		logger: logger,
 	}
 }
 
-func initBooks() []books.Book {
-	return []books.Book{
+func initBooks() []Book {
+	return []Book{
 		{
 			ID:     "1",
 			Title:  "War and Peace",
@@ -42,11 +42,11 @@ func initBooks() []books.Book {
 	}
 }
 
-func (s *mockStorage) Find(_ context.Context) ([]books.Book, error) {
+func (s *mockStorage) Find(_ context.Context) ([]Book, error) {
 	return s.books, nil
 }
 
-func (s *mockStorage) FindOne(_ context.Context, id string) (b books.Book, err error) {
+func (s *mockStorage) FindOne(_ context.Context, id string) (b Book, err error) {
 	for _, b := range s.books {
 		if b.ID == id {
 			return b, nil
@@ -56,12 +56,12 @@ func (s *mockStorage) FindOne(_ context.Context, id string) (b books.Book, err e
 	return b, errors.New("book not found")
 }
 
-func (s *mockStorage) Insert(_ context.Context, book books.Book) (string, error) {
+func (s *mockStorage) Insert(_ context.Context, book Book) (string, error) {
 	s.books = append(s.books, book)
 	return book.ID, nil
 }
 
-func (s *mockStorage) Update(_ context.Context, book books.UpdateBookDto) error {
+func (s *mockStorage) Update(_ context.Context, book UpdateBookDto) error {
 	// TODO: implement
 	s.logger.Debug("Update method not implemented")
 	return nil

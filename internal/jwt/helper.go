@@ -22,7 +22,7 @@ func CreateToken(u *user.LoginUserDto) (string, error) {
 	expired := time.Now().Add(jwtTTL)
 
 	claims := &Claims{Username: u.Username, StandardClaims: jwt.StandardClaims{
-		ExpiresAt: expired.Unix(),
+		ExpiresAt: expired.UnixMilli(),
 	}}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
