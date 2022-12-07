@@ -9,6 +9,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/Serasmi/home-library/internal/auth"
+
 	"github.com/Serasmi/home-library/internal/api/books"
 	"github.com/Serasmi/home-library/internal/api/books/db"
 	"github.com/Serasmi/home-library/internal/api/health"
@@ -45,6 +47,9 @@ func main() {
 			logger.Fatalf("Error closing mongodb server: %s", err.Error())
 		}
 	}()
+
+	authHandler := auth.NewHandler(logger)
+	authHandler.Register(router)
 
 	healthHandler := health.NewHandler(apiPath)
 	healthHandler.Register(router)
