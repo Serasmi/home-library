@@ -2,9 +2,10 @@ package logging
 
 import (
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"path"
 	"runtime"
+
+	"github.com/sirupsen/logrus"
 )
 
 var e *logrus.Entry

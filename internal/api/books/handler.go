@@ -3,11 +3,14 @@ package books
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
+
+	"github.com/Serasmi/home-library/internal/jwt"
+
 	"github.com/Serasmi/home-library/internal/handlers"
 	"github.com/Serasmi/home-library/pkg/logging"
 	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/mongo"
-	"net/http"
 )
 
 const (
@@ -26,11 +29,11 @@ func NewHandler(apiPath string, service Service, logger logging.Logger) handlers
 }
 
 func (h *handler) Register(router *httprouter.Router) {
-	router.HandlerFunc(http.MethodGet, h.apiPath+booksURL, h.GetAll)
-	router.HandlerFunc(http.MethodGet, h.apiPath+bookURL, h.GetByID)
-	router.HandlerFunc(http.MethodPost, h.apiPath+booksURL, h.Create)
-	router.HandlerFunc(http.MethodPatch, h.apiPath+bookURL, h.PartiallyUpdate)
-	router.HandlerFunc(http.MethodDelete, h.apiPath+bookURL, h.Delete)
+	router.HandlerFunc(http.MethodGet, h.apiPath+booksURL, jwt.Protected(h.GetAll, h.logger))
+	router.HandlerFunc(http.MethodGet, h.apiPath+bookURL, jwt.Protected(h.GetByID, h.logger))
+	router.HandlerFunc(http.MethodPost, h.apiPath+booksURL, jwt.Protected(h.Create, h.logger))
+	router.HandlerFunc(http.MethodPatch, h.apiPath+bookURL, jwt.Protected(h.PartiallyUpdate, h.logger))
+	router.HandlerFunc(http.MethodDelete, h.apiPath+bookURL, jwt.Protected(h.Delete, h.logger))
 }
 
 func (h *handler) GetAll(w http.ResponseWriter, r *http.Request) {
