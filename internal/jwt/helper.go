@@ -3,8 +3,6 @@ package jwt
 import (
 	"time"
 
-	"github.com/Serasmi/home-library/internal/user"
-
 	"github.com/golang-jwt/jwt"
 )
 
@@ -14,16 +12,21 @@ const (
 )
 
 type Claims struct {
+	UserId   string `json:"user_id"`
 	Username string `json:"username"`
 	jwt.StandardClaims
 }
 
-func CreateToken(u *user.LoginUserDto) (string, error) {
+func CreateToken(id string, username string) (string, error) {
 	expired := time.Now().Add(jwtTTL)
 
-	claims := &Claims{Username: u.Username, StandardClaims: jwt.StandardClaims{
-		ExpiresAt: expired.UnixMilli(),
-	}}
+	claims := &Claims{
+		UserId:   id,
+		Username: username,
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: expired.UnixMilli(),
+		},
+	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 

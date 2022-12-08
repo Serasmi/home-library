@@ -51,7 +51,7 @@ func (h *authHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.userService.CheckUser(r.Context(), dto.Username, dto.Password)
+	id, err := h.userService.FindUser(r.Context(), dto.Username, dto.Password)
 	if err != nil {
 		w.WriteHeader(http.StatusUnauthorized)
 		_, _ = w.Write([]byte("Invalid username or password"))
@@ -61,7 +61,7 @@ func (h *authHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := jwt.CreateToken(&dto)
+	token, err := jwt.CreateToken(id, dto.Username)
 	if err != nil {
 		h.logger.Error(err)
 		w.WriteHeader(http.StatusInternalServerError)

@@ -10,7 +10,18 @@ import (
 	"github.com/Serasmi/home-library/pkg/logging"
 )
 
-type username string
+type userCtxKeyType string
+
+var UserCtxKey userCtxKeyType = "user"
+
+type UserCtx struct {
+	Id       string
+	Username string
+}
+
+func withUser(ctx context.Context, user *UserCtx) context.Context {
+	return context.WithValue(ctx, UserCtxKey, user)
+}
 
 func Protected(next http.HandlerFunc, logger logging.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -37,7 +48,7 @@ func Protected(next http.HandlerFunc, logger logging.Logger) http.HandlerFunc {
 		}
 
 		claims, ok := token.Claims.(*Claims)
-		if !ok || claims.Username == "" {
+		if !ok {
 			logger.Error("Invalid token claims")
 			w.WriteHeader(http.StatusUnauthorized)
 			_, _ = w.Write([]byte("Invalid token claims"))
@@ -45,7 +56,7 @@ func Protected(next http.HandlerFunc, logger logging.Logger) http.HandlerFunc {
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), username("username"), claims.Username)
+		ctx := withUser(r.Context(), &UserCtx{Id: claims.UserId, Username: claims.Username})
 
 		next(w, r.WithContext(ctx))
 	}

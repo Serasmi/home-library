@@ -17,18 +17,18 @@ func NewService(storage Storage, logger logging.Logger) *Service {
 	return &Service{storage, logger}
 }
 
-func (s Service) CheckUser(ctx context.Context, username string, password string) error {
-	s.logger.Infof("check user: %s", username)
+func (s Service) FindUser(ctx context.Context, username string, password string) (id string, err error) {
+	s.logger.Infof("find user: %s", username)
 
 	user, err := s.storage.FindByName(ctx, username)
 	if err != nil {
-		return err
+		return id, err
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password))
 	if err != nil {
-		return err
+		return id, err
 	}
 
-	return nil
+	return user.Id, nil
 }
