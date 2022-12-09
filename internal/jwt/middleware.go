@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/Serasmi/home-library/internal/config"
+
 	"github.com/golang-jwt/jwt"
 
 	"github.com/Serasmi/home-library/pkg/logging"
@@ -37,7 +39,8 @@ func Protected(next http.HandlerFunc, logger logging.Logger) http.HandlerFunc {
 		tokenString := authHeader[1]
 
 		token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(t *jwt.Token) (interface{}, error) {
-			return []byte(jwtSigningKey), nil
+			secret := config.GetConfig().JWT.Secret
+			return []byte(secret), nil
 		})
 		if err != nil || !token.Valid {
 			logger.Error("Invalid access token", err)

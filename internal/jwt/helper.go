@@ -3,12 +3,13 @@ package jwt
 import (
 	"time"
 
+	"github.com/Serasmi/home-library/internal/config"
+
 	"github.com/golang-jwt/jwt"
 )
 
 const (
-	jwtSigningKey = "fjsadomwoi3475872364895n23t4hf9328n4ytv6c2"
-	jwtTTL        = 3 * time.Hour
+	jwtTTL = 3 * time.Hour
 )
 
 type Claims struct {
@@ -29,8 +30,9 @@ func CreateToken(id string, username string) (string, error) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	secret := config.GetConfig().JWT.Secret
 
-	tokenString, err := token.SignedString([]byte(jwtSigningKey))
+	tokenString, err := token.SignedString([]byte(secret))
 	if err != nil {
 		return "", err
 	}
