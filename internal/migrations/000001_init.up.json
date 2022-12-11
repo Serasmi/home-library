@@ -1,0 +1,29 @@
+[
+  {
+    "createIndexes": "books",
+    "indexes": [
+      {
+        "key": {
+          "title": 1
+        },
+        "name": "unique_title",
+        "unique": true,
+        "background": true
+      }
+    ]
+  },
+  {
+    "createIndexes": "users",
+    "indexes": [
+      {
+        "key": {
+          "username": 1
+        },
+        "name": "unique_username",
+        "unique": true,
+        "background": true
+      }
+    ]
+  }
+]
+

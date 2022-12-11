@@ -1,0 +1,12 @@
+[
+  {
+    "insert": "users",
+    "documents": [
+      {
+        "username": "zoomer",
+        "passwordHash": "$2a$10$MsG7XayEqCCNHpsvkoEfsuAGbJbUZeK2l3uQyJvlBZ5TjMiSN427O"
+      }
+    ]
+  }
+]
+

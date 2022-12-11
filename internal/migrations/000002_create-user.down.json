@@ -1,0 +1,12 @@
+[
+  {
+    "delete": "users",
+    "deletes": [
+      {
+        "q": { "username": "zoomer" },
+        "limit": 0
+      }
+    ]
+  }
+]
+
