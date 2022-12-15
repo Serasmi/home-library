@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/Serasmi/home-library/internal/config"
 
@@ -55,6 +56,15 @@ func Protected(next http.HandlerFunc, logger logging.Logger) http.HandlerFunc {
 			logger.Error("Invalid token claims")
 			w.WriteHeader(http.StatusUnauthorized)
 			_, _ = w.Write([]byte("Invalid token claims"))
+
+			return
+		}
+
+		ok = claims.VerifyExpiresAt(time.Now().UnixMilli(), true)
+		if !ok {
+			logger.Error("Unauthorized")
+			w.WriteHeader(http.StatusUnauthorized)
+			_, _ = w.Write([]byte("Expired access token"))
 
 			return
 		}
