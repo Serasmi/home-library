@@ -9,6 +9,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/Serasmi/home-library/pkg/uploader"
+
 	"github.com/Serasmi/home-library/internal/config"
 
 	"github.com/Serasmi/home-library/internal/user"
@@ -59,10 +61,13 @@ func main() {
 	authHandler := auth.NewHandler(userService, logger)
 	authHandler.Register(router)
 
+	upl := uploader.NewFSUploader(logger)
+	uploadService := uploader.NewService(upl, logger)
+
 	booksStorage := books.NewMongoStorage(mongoClient.Database(cfg.DB.Name), booksCollection, logger)
 	// booksStorage := db.NewMockStorage(logger)
 	booksService := books.NewService(booksStorage, logger)
-	booksHandler := books.NewHandler(apiPath, booksService, logger)
+	booksHandler := books.NewHandler(apiPath, booksService, uploadService, logger)
 	booksHandler.Register(router)
 
 	healthHandler := health.NewHandler(apiPath)
