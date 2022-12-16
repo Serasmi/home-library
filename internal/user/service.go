@@ -10,10 +10,10 @@ import (
 
 type Service struct {
 	storage Storage
-	logger  logging.Logger
+	logger  *logging.Logger
 }
 
-func NewService(storage Storage, logger logging.Logger) *Service {
+func NewService(storage Storage, logger *logging.Logger) *Service {
 	return &Service{storage, logger}
 }
 

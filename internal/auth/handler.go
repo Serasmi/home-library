@@ -20,10 +20,10 @@ var _ handlers.Handler = &authHandler{}
 
 type authHandler struct {
 	userService *user.Service
-	logger      logging.Logger
+	logger      *logging.Logger
 }
 
-func NewHandler(userService *user.Service, logger logging.Logger) handlers.Handler {
+func NewHandler(userService *user.Service, logger *logging.Logger) handlers.Handler {
 	return &authHandler{userService, logger}
 }
 

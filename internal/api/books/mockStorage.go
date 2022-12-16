@@ -9,10 +9,10 @@ import (
 
 type mockStorage struct {
 	books  []Book
-	logger logging.Logger
+	logger *logging.Logger
 }
 
-func NewMockStorage(logger logging.Logger) Storage {
+func NewMockStorage(logger *logging.Logger) Storage {
 	return &mockStorage{
 		books:  initBooks(),
 		logger: logger,

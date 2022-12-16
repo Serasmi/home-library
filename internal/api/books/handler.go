@@ -20,11 +20,11 @@ const (
 
 type handler struct {
 	apiPath string
-	logger  logging.Logger
+	logger  *logging.Logger
 	service Service
 }
 
-func NewHandler(apiPath string, service Service, logger logging.Logger) handlers.Handler {
+func NewHandler(apiPath string, service Service, logger *logging.Logger) handlers.Handler {
 	return &handler{apiPath, logger, service}
 }
 

@@ -8,19 +8,14 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var e *logrus.Entry
+var logger Logger
 
 type Logger struct {
 	*logrus.Entry
 }
 
-func GetLogger() Logger {
-	return Logger{e}
-}
-
-func init() {
+func NewLogger() *Logger {
 	l := logrus.New()
-	l.SetReportCaller(true)
 	l.Formatter = &logrus.TextFormatter{
 		CallerPrettyfier: func(frame *runtime.Frame) (function string, file string) {
 			filename := path.Base(frame.File)
@@ -31,5 +26,21 @@ func init() {
 	}
 	l.SetLevel(logrus.DebugLevel)
 
-	e = logrus.NewEntry(l)
+	logger = Logger{logrus.NewEntry(l)}
+
+	return &logger
+}
+
+func GetLogger() *Logger {
+	return &logger
+}
+
+func (l *Logger) SetLevel(lvl string) {
+	level, err := logrus.ParseLevel(lvl)
+	if err != nil {
+		l.Errorf("unable to parse loglevel: %s", lvl)
+		return
+	}
+
+	l.Logger.SetLevel(level)
 }

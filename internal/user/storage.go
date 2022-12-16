@@ -17,10 +17,10 @@ type Storage interface {
 
 type mongoStorage struct {
 	collection *mongo.Collection
-	logger     logging.Logger
+	logger     *logging.Logger
 }
 
-func NewMongoStorage(database *mongo.Database, collection string, logger logging.Logger) Storage {
+func NewMongoStorage(database *mongo.Database, collection string, logger *logging.Logger) Storage {
 	return &mongoStorage{
 		collection: database.Collection(collection),
 		logger:     logger,

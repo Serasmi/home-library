@@ -2,6 +2,7 @@ package books
 
 import (
 	"context"
+
 	"github.com/Serasmi/home-library/pkg/logging"
 )
 
@@ -16,11 +17,11 @@ type Service interface {
 }
 
 type service struct {
-	logger  logging.Logger
+	logger  *logging.Logger
 	storage Storage
 }
 
-func NewService(storage Storage, logger logging.Logger) Service {
+func NewService(storage Storage, logger *logging.Logger) Service {
 	return &service{logger, storage}
 }
 

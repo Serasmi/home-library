@@ -31,9 +31,11 @@ const (
 )
 
 func main() {
-	logger := logging.GetLogger()
+	logger := logging.NewLogger()
 
 	cfg := config.InitConfig(logger)
+
+	logger.SetLevel(cfg.App.LogLevel)
 
 	ctx := context.Background()
 	router := apiRouter.NewRouter(logger)
@@ -69,7 +71,7 @@ func main() {
 	start(ctx, router, logger, cfg)
 }
 
-func start(ctx context.Context, router *httprouter.Router, logger logging.Logger, cfg *config.Config) {
+func start(ctx context.Context, router *httprouter.Router, logger *logging.Logger, cfg *config.Config) {
 	logger.Infof("Start application")
 
 	listener, err := net.Listen("tcp", cfg.App.Host+":"+cfg.App.Port)

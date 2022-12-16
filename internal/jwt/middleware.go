@@ -26,7 +26,7 @@ func withUser(ctx context.Context, user *UserCtx) context.Context {
 	return context.WithValue(ctx, UserCtxKey, user)
 }
 
-func Protected(next http.HandlerFunc, logger logging.Logger) http.HandlerFunc {
+func Protected(next http.HandlerFunc, logger *logging.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		authHeader := strings.Split(r.Header.Get("Authorization"), "Bearer ")
 		if len(authHeader) != 2 {

@@ -2,14 +2,16 @@ package config
 
 import (
 	"github.com/Serasmi/home-library/pkg/logging"
+
 	"github.com/caarlos0/env/v6"
 	"github.com/joho/godotenv"
 )
 
 type Config struct {
 	App struct {
-		Host string `env:"APP_HOST" envDefault:"0.0.0.0"`
-		Port string `env:"APP_PORT,required"`
+		Host     string `env:"APP_HOST" envDefault:"0.0.0.0"`
+		Port     string `env:"APP_PORT,required"`
+		LogLevel string `env:"APP_LOG_LEVEL" envDefault:"info"`
 	}
 	DB struct {
 		Host     string `env:"MONGODB_HOST,required"`
@@ -29,7 +31,7 @@ func GetConfig() *Config {
 	return &config
 }
 
-func InitConfig(logger logging.Logger) *Config {
+func InitConfig(logger *logging.Logger) *Config {
 	logger.Info("init config")
 
 	err := godotenv.Load()

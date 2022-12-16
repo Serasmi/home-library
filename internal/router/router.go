@@ -5,7 +5,7 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-func NewRouter(logger logging.Logger) (r *httprouter.Router) {
+func NewRouter(logger *logging.Logger) (r *httprouter.Router) {
 	logger.Infof("Create router")
 
 	r = httprouter.New()
