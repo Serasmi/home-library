@@ -12,7 +12,7 @@ type Handler interface {
 	Register(router *httprouter.Router)
 }
 
-func RequestID(r *http.Request, logger logging.Logger) (string, error) {
+func RequestID(r *http.Request, logger *logging.Logger) (string, error) {
 	logger.Debug("Get id from request params")
 
 	params := httprouter.ParamsFromContext(r.Context())
