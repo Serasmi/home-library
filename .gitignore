@@ -20,3 +20,4 @@
 # Project
 .env
 bin/
+uploads/

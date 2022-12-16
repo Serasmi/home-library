@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/Serasmi/home-library/pkg/uploader"
+
 	"github.com/Serasmi/home-library/internal/jwt"
 
 	"github.com/Serasmi/home-library/internal/handlers"
@@ -14,18 +16,20 @@ import (
 )
 
 const (
-	booksURL = "/books"
-	bookURL  = "/books/:id"
+	booksURL       = "/books"
+	bookURL        = "/books/:id"
+	booksUploadURL = "/books/upload"
 )
 
 type handler struct {
-	apiPath string
-	logger  *logging.Logger
-	service Service
+	apiPath       string
+	service       Service
+	uploadService *uploader.Service
+	logger        *logging.Logger
 }
 
-func NewHandler(apiPath string, service Service, logger *logging.Logger) handlers.Handler {
-	return &handler{apiPath, logger, service}
+func NewHandler(apiPath string, service Service, uploadService *uploader.Service, logger *logging.Logger) handlers.Handler {
+	return &handler{apiPath, service, uploadService, logger}
 }
 
 func (h *handler) Register(router *httprouter.Router) {
@@ -34,6 +38,8 @@ func (h *handler) Register(router *httprouter.Router) {
 	router.HandlerFunc(http.MethodPost, h.apiPath+booksURL, jwt.Protected(h.Create, h.logger))
 	router.HandlerFunc(http.MethodPatch, h.apiPath+bookURL, jwt.Protected(h.PartiallyUpdate, h.logger))
 	router.HandlerFunc(http.MethodDelete, h.apiPath+bookURL, jwt.Protected(h.Delete, h.logger))
+
+	router.HandlerFunc(http.MethodPost, h.apiPath+booksUploadURL, jwt.Protected(h.Upload, h.logger))
 }
 
 func (h *handler) GetAll(w http.ResponseWriter, r *http.Request) {
@@ -177,6 +183,23 @@ func (h *handler) Delete(w http.ResponseWriter, r *http.Request) {
 
 	if err = h.service.Delete(r.Context(), id); err != nil {
 		h.logger.Error(err)
+		w.WriteHeader(http.StatusInternalServerError)
+
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *handler) Upload(w http.ResponseWriter, r *http.Request) {
+	h.logger.Info("upload book")
+	w.Header().Set("Content-Type", "application/json")
+
+	meta := uploader.FileMeta{Filename: "uploaded.pdf"}
+
+	err := h.uploadService.Upload(r.Context(), r.Body, meta)
+	if err != nil {
+		h.logger.Error("file uploading error:", err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 
 		return
