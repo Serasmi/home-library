@@ -1,6 +1,8 @@
 package upload
 
 import (
+	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/Serasmi/home-library/internal/handlers"
@@ -13,6 +15,7 @@ import (
 
 const (
 	uploadURL = "/upload"
+	metaURL   = "/upload/meta"
 )
 
 type handler struct {
@@ -27,6 +30,7 @@ func NewHandler(apiPath string, service *Service, logger *logging.Logger) handle
 
 func (h *handler) Register(router *httprouter.Router) {
 	router.HandlerFunc(http.MethodPost, h.apiPath+uploadURL, jwt.Protected(h.Upload, h.logger))
+	router.HandlerFunc(http.MethodPost, h.apiPath+metaURL, jwt.Protected(h.CreateMeta, h.logger))
 }
 
 func (h *handler) Upload(w http.ResponseWriter, r *http.Request) {
@@ -44,4 +48,54 @@ func (h *handler) Upload(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *handler) CreateMeta(w http.ResponseWriter, r *http.Request) {
+	h.logger.Info("create meta")
+	w.Header().Set("Content-Type", "application/json")
+
+	var dto CreateMetaDTO
+
+	err := json.NewDecoder(r.Body).Decode(&dto)
+	if err != nil {
+		h.logger.Error("decode meta:", err)
+
+		w.WriteHeader(http.StatusBadRequest)
+		_, _ = fmt.Fprint(w, "invalid data")
+
+		return
+	}
+
+	// TODO: create validator
+	if dto.Filename == "" {
+		h.logger.Error("empty filename")
+
+		w.WriteHeader(http.StatusBadRequest)
+		_, _ = fmt.Fprint(w, "empty filename")
+
+		return
+	}
+
+	id, err := h.service.CreateMeta(r.Context(), dto)
+	if err != nil {
+		h.logger.Error(err)
+
+		w.WriteHeader(http.StatusInternalServerError)
+		_, _ = fmt.Fprint(w, "creating entity server error")
+
+		return
+	}
+
+	resDTO, err := json.Marshal(CreateMetaResponseDTO{id})
+	if err != nil {
+		h.logger.Error("encode meta response:", err)
+
+		w.WriteHeader(http.StatusInternalServerError)
+		_, _ = fmt.Fprint(w, "creating entity server error")
+
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write(resDTO)
 }

@@ -31,6 +31,7 @@ import (
 const (
 	apiPath         = "/api"
 	booksCollection = "books"
+	metaCollection  = "meta"
 	usersCollection = "users"
 )
 
@@ -72,8 +73,9 @@ func main() {
 	healthHandler := health.NewHandler(apiPath)
 	healthHandler.Register(router)
 
+	uploadStorage := upload.NewMongoStorage(mongoClient.Database(cfg.DB.Name), metaCollection, logger)
 	upl := uploader.NewFSUploader(logger)
-	uploadService := upload.NewService(upl, logger)
+	uploadService := upload.NewService(uploadStorage, upl, logger)
 	uploadHandler := upload.NewHandler(apiPath, uploadService, logger)
 	uploadHandler.Register(router)
 
