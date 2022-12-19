@@ -6,7 +6,7 @@ import (
 )
 
 type FileMeta struct {
-	Filename string
+	Filename string `json:"filename"`
 }
 
 type Uploader interface {

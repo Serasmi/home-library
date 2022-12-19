@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/Serasmi/home-library/pkg/uploader"
-
 	"github.com/Serasmi/home-library/internal/jwt"
 
 	"github.com/Serasmi/home-library/internal/handlers"
@@ -16,20 +14,18 @@ import (
 )
 
 const (
-	booksURL       = "/books"
-	bookURL        = "/books/:id"
-	booksUploadURL = "/books/upload"
+	booksURL = "/books"
+	bookURL  = "/books/:id"
 )
 
 type handler struct {
-	apiPath       string
-	service       Service
-	uploadService *uploader.Service
-	logger        *logging.Logger
+	apiPath string
+	service Service
+	logger  *logging.Logger
 }
 
-func NewHandler(apiPath string, service Service, uploadService *uploader.Service, logger *logging.Logger) handlers.Handler {
-	return &handler{apiPath, service, uploadService, logger}
+func NewHandler(apiPath string, service Service, logger *logging.Logger) handlers.Handler {
+	return &handler{apiPath, service, logger}
 }
 
 func (h *handler) Register(router *httprouter.Router) {
@@ -38,8 +34,6 @@ func (h *handler) Register(router *httprouter.Router) {
 	router.HandlerFunc(http.MethodPost, h.apiPath+booksURL, jwt.Protected(h.Create, h.logger))
 	router.HandlerFunc(http.MethodPatch, h.apiPath+bookURL, jwt.Protected(h.PartiallyUpdate, h.logger))
 	router.HandlerFunc(http.MethodDelete, h.apiPath+bookURL, jwt.Protected(h.Delete, h.logger))
-
-	router.HandlerFunc(http.MethodPost, h.apiPath+booksUploadURL, jwt.Protected(h.Upload, h.logger))
 }
 
 func (h *handler) GetAll(w http.ResponseWriter, r *http.Request) {
@@ -67,7 +61,7 @@ func (h *handler) GetByID(w http.ResponseWriter, r *http.Request) {
 	id, err := handlers.RequestID(r, h.logger)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprint(w, "id parameter is required in request path")
+		_, _ = fmt.Fprint(w, "id parameter is required in request path")
 
 		return
 	}
@@ -94,11 +88,11 @@ func (h *handler) Create(w http.ResponseWriter, r *http.Request) {
 
 	var dto CreateBookDto
 
-	defer r.Body.Close() //nolint:errcheck
+	defer func() { _ = r.Body.Close() }()
 
 	if err := json.NewDecoder(r.Body).Decode(&dto); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprint(w, "invalid data")
+		_, _ = fmt.Fprint(w, "invalid data")
 
 		return
 	}
@@ -109,11 +103,11 @@ func (h *handler) Create(w http.ResponseWriter, r *http.Request) {
 		h.logger.Error(err)
 
 		if mongo.IsDuplicateKeyError(err) {
-			fmt.Fprint(w, "duplicated key")
+			_, _ = fmt.Fprint(w, "duplicated key")
 			return
 		}
 
-		fmt.Fprint(w, "creating entity server error")
+		_, _ = fmt.Fprint(w, "creating entity server error")
 
 		return
 	}
@@ -121,7 +115,7 @@ func (h *handler) Create(w http.ResponseWriter, r *http.Request) {
 	resDto, err := json.Marshal(CreateBookResponseDto{id})
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprint(w, "creating entity server error")
+		_, _ = fmt.Fprint(w, "creating entity server error")
 
 		return
 	}
@@ -137,7 +131,7 @@ func (h *handler) PartiallyUpdate(w http.ResponseWriter, r *http.Request) {
 	id, err := handlers.RequestID(r, h.logger)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprint(w, "id parameter is required in request path")
+		_, _ = fmt.Fprint(w, "id parameter is required in request path")
 
 		return
 	}
@@ -146,12 +140,12 @@ func (h *handler) PartiallyUpdate(w http.ResponseWriter, r *http.Request) {
 
 	var dto UpdateBookDto
 
-	defer r.Body.Close() //nolint:errcheck
+	defer func() { _ = r.Body.Close() }()
 
 	err = json.NewDecoder(r.Body).Decode(&dto)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprint(w, "invalid data")
+		_, _ = fmt.Fprint(w, "invalid data")
 
 		return
 	}
@@ -161,7 +155,7 @@ func (h *handler) PartiallyUpdate(w http.ResponseWriter, r *http.Request) {
 	err = h.service.Update(r.Context(), dto)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprint(w, "updating entity server error")
+		_, _ = fmt.Fprint(w, "updating entity server error")
 
 		return
 	}
@@ -176,30 +170,13 @@ func (h *handler) Delete(w http.ResponseWriter, r *http.Request) {
 	id, err := handlers.RequestID(r, h.logger)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprint(w, "id parameter is required in request path")
+		_, _ = fmt.Fprint(w, "id parameter is required in request path")
 
 		return
 	}
 
 	if err = h.service.Delete(r.Context(), id); err != nil {
 		h.logger.Error(err)
-		w.WriteHeader(http.StatusInternalServerError)
-
-		return
-	}
-
-	w.WriteHeader(http.StatusNoContent)
-}
-
-func (h *handler) Upload(w http.ResponseWriter, r *http.Request) {
-	h.logger.Info("upload book")
-	w.Header().Set("Content-Type", "application/json")
-
-	meta := uploader.FileMeta{Filename: "uploaded.pdf"}
-
-	err := h.uploadService.Upload(r.Context(), r.Body, meta)
-	if err != nil {
-		h.logger.Error("file uploading error:", err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 
 		return
