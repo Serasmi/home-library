@@ -4,6 +4,10 @@
     "index": "unique_title"
   },
   {
+    "dropIndexes": "meta",
+    "index": "unique_filename"
+  },
+  {
     "dropIndexes": "users",
     "index": "unique_username"
   }

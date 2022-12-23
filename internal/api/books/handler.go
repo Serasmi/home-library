@@ -99,14 +99,16 @@ func (h *handler) Create(w http.ResponseWriter, r *http.Request) {
 
 	id, err := h.service.Create(r.Context(), dto)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
 		h.logger.Error(err)
 
 		if mongo.IsDuplicateKeyError(err) {
-			_, _ = fmt.Fprint(w, "duplicated key")
+			w.WriteHeader(http.StatusBadRequest)
+			_, _ = fmt.Fprint(w, "duplicated entity")
+
 			return
 		}
 
+		w.WriteHeader(http.StatusInternalServerError)
 		_, _ = fmt.Fprint(w, "creating entity server error")
 
 		return

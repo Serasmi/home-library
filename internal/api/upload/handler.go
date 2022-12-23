@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/http"
 
+	"go.mongodb.org/mongo-driver/mongo"
+
 	"github.com/Serasmi/home-library/internal/handlers"
 	"github.com/Serasmi/home-library/internal/jwt"
 	"github.com/julienschmidt/httprouter"
@@ -79,6 +81,13 @@ func (h *handler) CreateMeta(w http.ResponseWriter, r *http.Request) {
 	id, err := h.service.CreateMeta(r.Context(), dto)
 	if err != nil {
 		h.logger.Error(err)
+
+		if mongo.IsDuplicateKeyError(err) {
+			w.WriteHeader(http.StatusBadRequest)
+			_, _ = fmt.Fprint(w, "duplicated entity")
+
+			return
+		}
 
 		w.WriteHeader(http.StatusInternalServerError)
 		_, _ = fmt.Fprint(w, "creating entity server error")

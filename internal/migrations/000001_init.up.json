@@ -13,6 +13,19 @@
     ]
   },
   {
+    "createIndexes": "meta",
+    "indexes": [
+      {
+        "key": {
+          "title": 1
+        },
+        "name": "unique_filename",
+        "unique": true,
+        "background": true
+      }
+    ]
+  },
+  {
     "createIndexes": "users",
     "indexes": [
       {
