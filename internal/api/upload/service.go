@@ -26,3 +26,7 @@ func (s Service) Upload(ctx context.Context, r io.ReadCloser, meta uploader.File
 func (s Service) CreateMeta(ctx context.Context, dto CreateMetaDTO) (string, error) {
 	return s.storage.CreateMeta(ctx, newMeta(dto))
 }
+
+func (s Service) DeleteMeta(ctx context.Context, id string) error {
+	return s.storage.DeleteMeta(ctx, id)
+}

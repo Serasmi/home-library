@@ -16,8 +16,9 @@ import (
 )
 
 const (
-	uploadURL = "/upload"
-	metaURL   = "/upload/meta"
+	uploadURL  = "/upload"
+	metaURL    = "/upload/meta"
+	oneMetaURL = "/upload/meta/:id"
 )
 
 type handler struct {
@@ -32,7 +33,9 @@ func NewHandler(apiPath string, service *Service, logger *logging.Logger) handle
 
 func (h *handler) Register(router *httprouter.Router) {
 	router.HandlerFunc(http.MethodPost, h.apiPath+uploadURL, jwt.Protected(h.Upload, h.logger))
+
 	router.HandlerFunc(http.MethodPost, h.apiPath+metaURL, jwt.Protected(h.CreateMeta, h.logger))
+	router.HandlerFunc(http.MethodDelete, h.apiPath+oneMetaURL, jwt.Protected(h.DeleteMeta, h.logger))
 }
 
 func (h *handler) Upload(w http.ResponseWriter, r *http.Request) {
@@ -107,4 +110,27 @@ func (h *handler) CreateMeta(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write(resDTO)
+}
+
+func (h *handler) DeleteMeta(w http.ResponseWriter, r *http.Request) {
+	h.logger.Info("delete meta")
+	w.Header().Set("Content-Type", "application/json")
+
+	id, err := handlers.RequestID(r, h.logger)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		_, _ = fmt.Fprint(w, "id parameter is required in request path")
+
+		return
+	}
+
+	err = h.service.DeleteMeta(r.Context(), id)
+	if err != nil {
+		h.logger.Error(err)
+		w.WriteHeader(http.StatusInternalServerError)
+
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
