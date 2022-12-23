@@ -26,8 +26,8 @@ func NewFSUploader(logger *logging.Logger) Uploader {
 	}
 }
 
-func filePath(f FileMeta) string {
-	return fmt.Sprintf("%s/%s", dirPath, f.Filename)
+func filePath(filename string) string {
+	return fmt.Sprintf("%s/%s", dirPath, filename)
 }
 
 func mustInitFS(logger *logging.Logger) {
@@ -39,12 +39,12 @@ func mustInitFS(logger *logging.Logger) {
 	}
 }
 
-func (u fsUploader) Upload(ctx context.Context, r io.ReadCloser, meta FileMeta) error {
+func (u fsUploader) Upload(_ context.Context, r io.ReadCloser, meta FileMeta) error {
 	if meta.Filename == "" {
 		return errors.New("empty filename")
 	}
 
-	f, err := os.Create(filePath(meta))
+	f, err := os.Create(filePath(meta.ID))
 	if err != nil {
 		u.logger.Error("file creating error:", err)
 		// TODO: custom error is needed
@@ -63,6 +63,20 @@ func (u fsUploader) Upload(ctx context.Context, r io.ReadCloser, meta FileMeta) 
 	defer func() { _ = r.Close() }()
 
 	u.logger.Debugf("written %d bytes", b)
+
+	// TODO: add logic if file exist:
+	//  1. Check that file exist in storage
+	//  2. If exist return error
+	//  3. Parse error in service and save file with index strategy
+	//  4. Update filename in meta collection in DB
+	//  5. Return new meta in response to client
+
+	err = os.Rename(filePath(meta.ID), filePath(meta.Filename))
+	if err != nil {
+		u.logger.Error("renaming file error", err)
+		// TODO: custom error is needed
+		return errors.New("renaming file error")
+	}
 
 	return nil
 }

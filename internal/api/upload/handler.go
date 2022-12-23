@@ -12,13 +12,13 @@ import (
 	"github.com/julienschmidt/httprouter"
 
 	"github.com/Serasmi/home-library/pkg/logging"
-	"github.com/Serasmi/home-library/pkg/uploader"
 )
 
 const (
-	uploadURL  = "/upload"
-	metaURL    = "/upload/meta"
-	oneMetaURL = "/upload/meta/:id"
+	uploadURL = "/upload/:id"
+	// TODO: rename meta to uploads
+	metaURL    = "/meta"
+	oneMetaURL = "/meta/:id"
 )
 
 type handler struct {
@@ -32,7 +32,7 @@ func NewHandler(apiPath string, service *Service, logger *logging.Logger) handle
 }
 
 func (h *handler) Register(router *httprouter.Router) {
-	router.HandlerFunc(http.MethodPost, h.apiPath+uploadURL, jwt.Protected(h.Upload, h.logger))
+	router.HandlerFunc(http.MethodPut, h.apiPath+uploadURL, jwt.Protected(h.Upload, h.logger))
 
 	router.HandlerFunc(http.MethodPost, h.apiPath+metaURL, jwt.Protected(h.CreateMeta, h.logger))
 	router.HandlerFunc(http.MethodDelete, h.apiPath+oneMetaURL, jwt.Protected(h.DeleteMeta, h.logger))
@@ -42,17 +42,52 @@ func (h *handler) Upload(w http.ResponseWriter, r *http.Request) {
 	h.logger.Info("upload file")
 	w.Header().Set("Content-Type", "application/json")
 
-	meta := uploader.FileMeta{Filename: "uploaded.pdf"}
-
-	err := h.service.Upload(r.Context(), r.Body, meta)
+	id, err := handlers.RequestID(r, h.logger)
 	if err != nil {
-		h.logger.Error("file uploading error:", err.Error())
+		h.logger.Error("id parameter is required in request path:", err)
+
+		w.WriteHeader(http.StatusBadRequest)
+		_, _ = fmt.Fprint(w, "upload id is required")
+
+		return
+	}
+
+	meta, err := h.service.GetMetaById(r.Context(), id)
+	if err != nil {
+		h.logger.Error("finding meta error:", err)
+
+		w.WriteHeader(http.StatusBadRequest)
+		_, _ = fmt.Fprint(w, "upload not found")
+
+		return
+	}
+
+	if meta.Status != Created {
+		h.logger.Error("file has already uploaded. Status:", meta.Status)
+
+		w.WriteHeader(http.StatusBadRequest)
+		_, _ = fmt.Fprint(w, "file has already uploaded")
+
+		return
+	}
+
+	filename, err := h.service.Upload(r.Context(), r.Body, meta)
+	if err != nil {
+		h.logger.Error("file uploading error:", err)
 		w.WriteHeader(http.StatusInternalServerError)
 
 		return
 	}
 
 	w.WriteHeader(http.StatusNoContent)
+
+	resDto, err := json.Marshal(ResponseDTO{filename})
+	if err != nil {
+		h.logger.Error(w, "marshaling error")
+		return
+	}
+
+	_, _ = w.Write(resDto)
 }
 
 func (h *handler) CreateMeta(w http.ResponseWriter, r *http.Request) {

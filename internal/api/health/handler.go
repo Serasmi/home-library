@@ -28,6 +28,7 @@ func (h *handler) Register(router *httprouter.Router) {
 
 func (h *handler) Health(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusOK)
+
 	err := json.NewEncoder(w).Encode(map[string]bool{"ok": true})
 	if err != nil {
 		logrus.Error("encoding response error")

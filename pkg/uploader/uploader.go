@@ -6,6 +6,7 @@ import (
 )
 
 type FileMeta struct {
+	ID       string `json:"ID"`
 	Filename string `json:"filename"`
 }
 

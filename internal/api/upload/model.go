@@ -32,3 +32,7 @@ type CreateMetaDTO struct {
 type CreateMetaResponseDTO struct {
 	ID string `json:"id"`
 }
+
+type ResponseDTO struct {
+	Filename string `json:"filename"`
+}
