@@ -15,7 +15,7 @@ func NewGoogleUploader(logger *logging.Logger) Uploader {
 	return &GoogleUploader{logger: logger}
 }
 
-func (u GoogleUploader) Upload(ctx context.Context, r io.ReadCloser, meta FileMeta) error {
+func (u GoogleUploader) Upload(ctx context.Context, r io.ReadCloser, upload Upload) error {
 	// TODO implement me
 	panic("implement me")
 }

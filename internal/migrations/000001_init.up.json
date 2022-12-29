@@ -13,7 +13,7 @@
     ]
   },
   {
-    "createIndexes": "meta",
+    "createIndexes": "uploads",
     "indexes": [
       {
         "key": {

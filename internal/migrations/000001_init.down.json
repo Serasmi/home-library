@@ -4,7 +4,7 @@
     "index": "unique_title"
   },
   {
-    "dropIndexes": "meta",
+    "dropIndexes": "uploads",
     "index": "unique_filename"
   },
   {

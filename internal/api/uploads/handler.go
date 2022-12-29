@@ -1,4 +1,4 @@
-package upload
+package uploads
 
 import (
 	"encoding/json"
@@ -15,10 +15,8 @@ import (
 )
 
 const (
-	uploadURL = "/upload/:id"
-	// TODO: rename meta to uploads
-	metaURL    = "/meta"
-	oneMetaURL = "/meta/:id"
+	uploadsURL = "/uploads"
+	uploadURL  = "/uploads/:id"
 )
 
 type handler struct {
@@ -33,13 +31,12 @@ func NewHandler(apiPath string, service *Service, logger *logging.Logger) handle
 
 func (h *handler) Register(router *httprouter.Router) {
 	router.HandlerFunc(http.MethodPut, h.apiPath+uploadURL, jwt.Protected(h.Upload, h.logger))
-
-	router.HandlerFunc(http.MethodPost, h.apiPath+metaURL, jwt.Protected(h.CreateMeta, h.logger))
-	router.HandlerFunc(http.MethodDelete, h.apiPath+oneMetaURL, jwt.Protected(h.DeleteMeta, h.logger))
+	router.HandlerFunc(http.MethodPost, h.apiPath+uploadsURL, jwt.Protected(h.CreateUpload, h.logger))
+	router.HandlerFunc(http.MethodDelete, h.apiPath+uploadURL, jwt.Protected(h.DeleteUpload, h.logger))
 }
 
 func (h *handler) Upload(w http.ResponseWriter, r *http.Request) {
-	h.logger.Info("upload file")
+	h.logger.Info("uploads file")
 	w.Header().Set("Content-Type", "application/json")
 
 	id, err := handlers.RequestID(r, h.logger)
@@ -47,23 +44,23 @@ func (h *handler) Upload(w http.ResponseWriter, r *http.Request) {
 		h.logger.Error("id parameter is required in request path:", err)
 
 		w.WriteHeader(http.StatusBadRequest)
-		_, _ = fmt.Fprint(w, "upload id is required")
+		_, _ = fmt.Fprint(w, "uploads id is required")
 
 		return
 	}
 
-	meta, err := h.service.GetMetaById(r.Context(), id)
+	upload, err := h.service.GetUploadById(r.Context(), id)
 	if err != nil {
-		h.logger.Error("finding meta error:", err)
+		h.logger.Error("finding uploads error:", err)
 
 		w.WriteHeader(http.StatusBadRequest)
-		_, _ = fmt.Fprint(w, "upload not found")
+		_, _ = fmt.Fprint(w, "uploads not found")
 
 		return
 	}
 
-	if meta.Status != Created {
-		h.logger.Error("file has already uploaded. Status:", meta.Status)
+	if upload.Status != Created {
+		h.logger.Error("file has already uploaded. Status:", upload.Status)
 
 		w.WriteHeader(http.StatusBadRequest)
 		_, _ = fmt.Fprint(w, "file has already uploaded")
@@ -71,7 +68,7 @@ func (h *handler) Upload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	filename, err := h.service.Upload(r.Context(), r.Body, meta)
+	filename, err := h.service.Upload(r.Context(), r.Body, upload)
 	if err != nil {
 		h.logger.Error("file uploading error:", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -90,15 +87,15 @@ func (h *handler) Upload(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write(resDto)
 }
 
-func (h *handler) CreateMeta(w http.ResponseWriter, r *http.Request) {
-	h.logger.Info("create meta")
+func (h *handler) CreateUpload(w http.ResponseWriter, r *http.Request) {
+	h.logger.Info("create uploads")
 	w.Header().Set("Content-Type", "application/json")
 
-	var dto CreateMetaDTO
+	var dto CreateUploadDTO
 
 	err := json.NewDecoder(r.Body).Decode(&dto)
 	if err != nil {
-		h.logger.Error("decode meta:", err)
+		h.logger.Error("decode uploads:", err)
 
 		w.WriteHeader(http.StatusBadRequest)
 		_, _ = fmt.Fprint(w, "invalid data")
@@ -116,7 +113,7 @@ func (h *handler) CreateMeta(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := h.service.CreateMeta(r.Context(), dto)
+	id, err := h.service.CreateUpload(r.Context(), dto)
 	if err != nil {
 		h.logger.Error(err)
 
@@ -133,9 +130,9 @@ func (h *handler) CreateMeta(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resDTO, err := json.Marshal(CreateMetaResponseDTO{id})
+	resDTO, err := json.Marshal(CreateUploadResponseDTO{id})
 	if err != nil {
-		h.logger.Error("encode meta response:", err)
+		h.logger.Error("encode uploads response:", err)
 
 		w.WriteHeader(http.StatusInternalServerError)
 		_, _ = fmt.Fprint(w, "creating entity server error")
@@ -147,8 +144,8 @@ func (h *handler) CreateMeta(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write(resDTO)
 }
 
-func (h *handler) DeleteMeta(w http.ResponseWriter, r *http.Request) {
-	h.logger.Info("delete meta")
+func (h *handler) DeleteUpload(w http.ResponseWriter, r *http.Request) {
+	h.logger.Info("delete uploads")
 	w.Header().Set("Content-Type", "application/json")
 
 	id, err := handlers.RequestID(r, h.logger)
@@ -159,7 +156,7 @@ func (h *handler) DeleteMeta(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.service.DeleteMeta(r.Context(), id)
+	err = h.service.DeleteUpload(r.Context(), id)
 	if err != nil {
 		h.logger.Error(err)
 		w.WriteHeader(http.StatusInternalServerError)

@@ -1,4 +1,4 @@
-package upload
+package uploads
 
 import (
 	"context"
@@ -15,10 +15,10 @@ import (
 )
 
 type Storage interface {
-	CreateMeta(ctx context.Context, meta Meta) (string, error)
-	GetMetaById(ctx context.Context, id string) (Meta, error)
-	DeleteMeta(ctx context.Context, id string) error
-	UpdateMetaStatus(ctx context.Context, id string, status Status) error
+	CreateUpload(ctx context.Context, upload Upload) (string, error)
+	GetUploadById(ctx context.Context, id string) (Upload, error)
+	DeleteUpload(ctx context.Context, id string) error
+	UpdateUploadStatus(ctx context.Context, id string, status Status) error
 }
 
 type mongoStorage struct {
@@ -30,27 +30,27 @@ func NewMongoStorage(storage *mongo.Database, collection string, logger *logging
 	return &mongoStorage{collection: storage.Collection(collection), logger: logger}
 }
 
-func (s *mongoStorage) CreateMeta(ctx context.Context, meta Meta) (string, error) {
+func (s *mongoStorage) CreateUpload(ctx context.Context, upload Upload) (string, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	res, err := s.collection.InsertOne(ctx, meta)
+	res, err := s.collection.InsertOne(ctx, upload)
 	if err != nil {
 		return "", fmt.Errorf("execute query: %w", err)
 	}
 
-	metaId, ok := res.InsertedID.(primitive.ObjectID)
+	uploadId, ok := res.InsertedID.(primitive.ObjectID)
 	if !ok {
 		return "", fmt.Errorf("convet objectid to hex")
 	}
 
-	return metaId.Hex(), nil
+	return uploadId.Hex(), nil
 }
 
-func (s *mongoStorage) GetMetaById(ctx context.Context, id string) (m Meta, err error) {
+func (s *mongoStorage) GetUploadById(ctx context.Context, id string) (u Upload, err error) {
 	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		return m, fmt.Errorf("failed to convert hex to objectID. error: %w", err)
+		return u, fmt.Errorf("failed to convert hex to objectID. error: %w", err)
 	}
 
 	filter := bson.M{"_id": objectID}
@@ -61,20 +61,20 @@ func (s *mongoStorage) GetMetaById(ctx context.Context, id string) (m Meta, err 
 	result := s.collection.FindOne(ctx, filter)
 	if err = result.Err(); err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			return m, errors.New("meta not found")
+			return u, errors.New("upload not found")
 		}
 
-		return m, fmt.Errorf("failed to execute query. error: %w", err)
+		return u, fmt.Errorf("failed to execute query. error: %w", err)
 	}
 
-	if err = result.Decode(&m); err != nil {
-		return m, fmt.Errorf("failed to decode document. error: %w", err)
+	if err = result.Decode(&u); err != nil {
+		return u, fmt.Errorf("failed to decode document. error: %w", err)
 	}
 
-	return m, nil
+	return u, nil
 }
 
-func (s *mongoStorage) DeleteMeta(ctx context.Context, id string) error {
+func (s *mongoStorage) DeleteUpload(ctx context.Context, id string) error {
 	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return fmt.Errorf("failed to convert hex to objectID. error: %w", err)
@@ -97,7 +97,7 @@ func (s *mongoStorage) DeleteMeta(ctx context.Context, id string) error {
 	return nil
 }
 
-func (s *mongoStorage) UpdateMetaStatus(ctx context.Context, id string, status Status) error {
+func (s *mongoStorage) UpdateUploadStatus(ctx context.Context, id string, status Status) error {
 	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return fmt.Errorf("failed to convert hex to objectID. error: %w", err)

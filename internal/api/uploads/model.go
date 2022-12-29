@@ -1,4 +1,4 @@
-package upload
+package uploads
 
 import "time"
 
@@ -10,26 +10,26 @@ const (
 	Done
 )
 
-type Meta struct {
+type Upload struct {
 	ID        string    `json:"id" bson:"_id,omitempty"`
 	Filename  string    `json:"filename" bson:"filename"`
 	CreatedAt time.Time `json:"created_at" bson:"created_at"`
 	Status    Status    `json:"status" bson:"status"`
 }
 
-func newMeta(dto CreateMetaDTO) Meta {
-	return Meta{
+func newUpload(dto CreateUploadDTO) Upload {
+	return Upload{
 		Filename:  dto.Filename,
 		CreatedAt: time.Now(),
 		Status:    Created,
 	}
 }
 
-type CreateMetaDTO struct {
+type CreateUploadDTO struct {
 	Filename string `json:"filename"`
 }
 
-type CreateMetaResponseDTO struct {
+type CreateUploadResponseDTO struct {
 	ID string `json:"id"`
 }
 

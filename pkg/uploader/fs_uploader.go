@@ -39,12 +39,12 @@ func mustInitFS(logger *logging.Logger) {
 	}
 }
 
-func (u fsUploader) Upload(_ context.Context, r io.ReadCloser, meta FileMeta) error {
-	if meta.Filename == "" {
+func (u fsUploader) Upload(_ context.Context, r io.ReadCloser, upload Upload) error {
+	if upload.Filename == "" {
 		return errors.New("empty filename")
 	}
 
-	f, err := os.Create(filePath(meta.ID))
+	f, err := os.Create(filePath(upload.ID))
 	if err != nil {
 		u.logger.Error("file creating error:", err)
 		// TODO: custom error is needed
@@ -68,10 +68,10 @@ func (u fsUploader) Upload(_ context.Context, r io.ReadCloser, meta FileMeta) er
 	//  1. Check that file exist in storage
 	//  2. If exist return error
 	//  3. Parse error in service and save file with index strategy
-	//  4. Update filename in meta collection in DB
-	//  5. Return new meta in response to client
+	//  4. Update filename in upload collection in DB
+	//  5. Return new upload in response to client
 
-	err = os.Rename(filePath(meta.ID), filePath(meta.Filename))
+	err = os.Rename(filePath(upload.ID), filePath(upload.Filename))
 	if err != nil {
 		u.logger.Error("renaming file error", err)
 		// TODO: custom error is needed

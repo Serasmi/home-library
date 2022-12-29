@@ -9,30 +9,25 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/Serasmi/home-library/internal/api/upload"
-
-	"github.com/Serasmi/home-library/pkg/uploader"
-
-	"github.com/Serasmi/home-library/internal/config"
-
-	"github.com/Serasmi/home-library/internal/user"
-
-	"github.com/Serasmi/home-library/internal/auth"
-
 	"github.com/Serasmi/home-library/internal/api/books"
 	"github.com/Serasmi/home-library/internal/api/health"
+	"github.com/Serasmi/home-library/internal/api/uploads"
+	"github.com/Serasmi/home-library/internal/auth"
+	"github.com/Serasmi/home-library/internal/config"
 	apiRouter "github.com/Serasmi/home-library/internal/router"
+	"github.com/Serasmi/home-library/internal/user"
 	"github.com/Serasmi/home-library/pkg/logging"
 	"github.com/Serasmi/home-library/pkg/mongodb"
+	"github.com/Serasmi/home-library/pkg/uploader"
 	"github.com/julienschmidt/httprouter"
 	"github.com/sirupsen/logrus"
 )
 
 const (
-	apiPath         = "/api"
-	booksCollection = "books"
-	metaCollection  = "meta"
-	usersCollection = "users"
+	apiPath           = "/api"
+	booksCollection   = "books"
+	uploadsCollection = "uploads"
+	usersCollection   = "users"
 )
 
 func main() {
@@ -73,11 +68,11 @@ func main() {
 	healthHandler := health.NewHandler(apiPath)
 	healthHandler.Register(router)
 
-	uploadStorage := upload.NewMongoStorage(mongoClient.Database(cfg.DB.Name), metaCollection, logger)
+	uploadsStorage := uploads.NewMongoStorage(mongoClient.Database(cfg.DB.Name), uploadsCollection, logger)
 	upl := uploader.NewFSUploader(logger)
-	uploadService := upload.NewService(uploadStorage, upl, logger)
-	uploadHandler := upload.NewHandler(apiPath, uploadService, logger)
-	uploadHandler.Register(router)
+	uploadsService := uploads.NewService(uploadsStorage, upl, logger)
+	uploadsHandler := uploads.NewHandler(apiPath, uploadsService, logger)
+	uploadsHandler.Register(router)
 
 	start(ctx, router, logger, cfg)
 }
