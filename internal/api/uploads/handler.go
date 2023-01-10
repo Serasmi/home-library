@@ -49,7 +49,7 @@ func (h *handler) Upload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	upload, err := h.service.GetUploadById(r.Context(), id)
+	upload, err := h.service.GetUploadByID(r.Context(), id)
 	if err != nil {
 		h.logger.Error("finding uploads error:", err)
 

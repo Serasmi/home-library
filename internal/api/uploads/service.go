@@ -4,19 +4,19 @@ import (
 	"context"
 	"io"
 
-	"github.com/Serasmi/home-library/pkg/uploader"
+	"github.com/Serasmi/home-library/pkg/files"
 
 	"github.com/Serasmi/home-library/pkg/logging"
 )
 
 type Service struct {
-	storage  Storage
-	uploader uploader.Uploader
-	logger   *logging.Logger
+	storage      Storage
+	fileProvider files.FileProvider
+	logger       *logging.Logger
 }
 
-func NewService(storage Storage, uploader uploader.Uploader, logger *logging.Logger) *Service {
-	return &Service{storage: storage, uploader: uploader, logger: logger}
+func NewService(storage Storage, fileProvider files.FileProvider, logger *logging.Logger) *Service {
+	return &Service{storage: storage, fileProvider: fileProvider, logger: logger}
 }
 
 func (s Service) Upload(ctx context.Context, r io.ReadCloser, upload Upload) (filename string, err error) {
@@ -25,7 +25,7 @@ func (s Service) Upload(ctx context.Context, r io.ReadCloser, upload Upload) (fi
 		return filename, err
 	}
 
-	err = s.uploader.Upload(ctx, r, uploader.Upload{ID: upload.ID, Filename: upload.Filename})
+	err = s.fileProvider.Upload(ctx, r, files.StoredFile{ID: upload.ID, Name: upload.Filename})
 	if err != nil {
 		statusErr := s.storage.UpdateUploadStatus(ctx, upload.ID, Created)
 		if statusErr != nil {
@@ -49,8 +49,8 @@ func (s Service) CreateUpload(ctx context.Context, dto CreateUploadDTO) (string,
 	return s.storage.CreateUpload(ctx, newUpload(dto))
 }
 
-func (s Service) GetUploadById(ctx context.Context, id string) (Upload, error) {
-	return s.storage.GetUploadById(ctx, id)
+func (s Service) GetUploadByID(ctx context.Context, id string) (Upload, error) {
+	return s.storage.GetUploadByID(ctx, id)
 }
 
 func (s Service) DeleteUpload(ctx context.Context, id string) error {

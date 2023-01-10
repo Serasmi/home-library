@@ -1,4 +1,4 @@
-package uploader
+package files
 
 import (
 	"context"
@@ -11,17 +11,17 @@ import (
 )
 
 const (
-	dirPath = "uploads"
+	dirPath = "files"
 )
 
-type fsUploader struct {
+type fsProvider struct {
 	logger *logging.Logger
 }
 
-func NewFSUploader(logger *logging.Logger) Uploader {
+func NewFSProvider(logger *logging.Logger) FileProvider {
 	mustInitFS(logger)
 
-	return &fsUploader{
+	return &fsProvider{
 		logger,
 	}
 }
@@ -31,7 +31,7 @@ func filePath(filename string) string {
 }
 
 func mustInitFS(logger *logging.Logger) {
-	logger.Debugf("create uploads directory: %s", dirPath)
+	logger.Debugf("create files directory: %s", dirPath)
 
 	err := os.Mkdir(dirPath, 0740)
 	if err != nil && !os.IsExist(err) {
@@ -39,12 +39,12 @@ func mustInitFS(logger *logging.Logger) {
 	}
 }
 
-func (u fsUploader) Upload(_ context.Context, r io.ReadCloser, upload Upload) error {
-	if upload.Filename == "" {
+func (u fsProvider) Upload(_ context.Context, r io.ReadCloser, file StoredFile) error {
+	if file.Name == "" {
 		return errors.New("empty filename")
 	}
 
-	f, err := os.Create(filePath(upload.ID))
+	f, err := os.Create(filePath(file.ID))
 	if err != nil {
 		u.logger.Error("file creating error:", err)
 		// TODO: custom error is needed
@@ -71,7 +71,7 @@ func (u fsUploader) Upload(_ context.Context, r io.ReadCloser, upload Upload) er
 	//  4. Update filename in upload collection in DB
 	//  5. Return new upload in response to client
 
-	err = os.Rename(filePath(upload.ID), filePath(upload.Filename))
+	err = os.Rename(filePath(file.ID), filePath(file.Name))
 	if err != nil {
 		u.logger.Error("renaming file error", err)
 		// TODO: custom error is needed

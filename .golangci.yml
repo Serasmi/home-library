@@ -142,7 +142,7 @@ linters-settings:
   #   packages:
   #     - github.com/sirupsen/logrus
   #   packages-with-error-messages:
-  #     # specify an error message to output when a blacklisted package is used
+  #     # specify an error message to output when a blacklisted file_provider is used
   #     github.com/sirupsen/logrus: "logging is allowed only by logutils.Log"
   misspell:
     # Correct spellings using locale preferences for US or UK.
@@ -321,7 +321,7 @@ issues:
 
     - linters:
         - golint
-      text: "don't use an underscore in package name"
+      text: "don't use an underscore in file_provider name"
     - linters:
         - golint
       text: "should have comment or be unexported"

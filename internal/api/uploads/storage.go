@@ -16,7 +16,7 @@ import (
 
 type Storage interface {
 	CreateUpload(ctx context.Context, upload Upload) (string, error)
-	GetUploadById(ctx context.Context, id string) (Upload, error)
+	GetUploadByID(ctx context.Context, id string) (Upload, error)
 	DeleteUpload(ctx context.Context, id string) error
 	UpdateUploadStatus(ctx context.Context, id string, status Status) error
 }
@@ -47,7 +47,7 @@ func (s *mongoStorage) CreateUpload(ctx context.Context, upload Upload) (string,
 	return uploadId.Hex(), nil
 }
 
-func (s *mongoStorage) GetUploadById(ctx context.Context, id string) (u Upload, err error) {
+func (s *mongoStorage) GetUploadByID(ctx context.Context, id string) (u Upload, err error) {
 	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return u, fmt.Errorf("failed to convert hex to objectID. error: %w", err)

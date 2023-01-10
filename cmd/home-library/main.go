@@ -9,6 +9,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/Serasmi/home-library/pkg/files"
+
 	"github.com/Serasmi/home-library/internal/api/books"
 	"github.com/Serasmi/home-library/internal/api/health"
 	"github.com/Serasmi/home-library/internal/api/uploads"
@@ -18,7 +20,6 @@ import (
 	"github.com/Serasmi/home-library/internal/user"
 	"github.com/Serasmi/home-library/pkg/logging"
 	"github.com/Serasmi/home-library/pkg/mongodb"
-	"github.com/Serasmi/home-library/pkg/uploader"
 	"github.com/julienschmidt/httprouter"
 	"github.com/sirupsen/logrus"
 )
@@ -53,6 +54,8 @@ func main() {
 		}
 	}()
 
+	fileProvider := files.NewFSProvider(logger)
+
 	userStorage := user.NewMongoStorage(mongoClient.Database(cfg.DB.Name), usersCollection, logger)
 	userService := user.NewService(userStorage, logger)
 
@@ -69,8 +72,7 @@ func main() {
 	healthHandler.Register(router)
 
 	uploadsStorage := uploads.NewMongoStorage(mongoClient.Database(cfg.DB.Name), uploadsCollection, logger)
-	upl := uploader.NewFSUploader(logger)
-	uploadsService := uploads.NewService(uploadsStorage, upl, logger)
+	uploadsService := uploads.NewService(uploadsStorage, fileProvider, logger)
 	uploadsHandler := uploads.NewHandler(apiPath, uploadsService, logger)
 	uploadsHandler.Register(router)
 
