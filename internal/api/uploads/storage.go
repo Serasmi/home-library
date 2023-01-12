@@ -14,9 +14,12 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
+var _ Storage = (*mongoStorage)(nil)
+
 type Storage interface {
 	CreateUpload(ctx context.Context, upload Upload) (string, error)
 	GetUploadByID(ctx context.Context, id string) (Upload, error)
+	GetUploadNameByBookID(ctx context.Context, bookId string) (string, error)
 	DeleteUpload(ctx context.Context, id string) error
 	UpdateUploadStatus(ctx context.Context, id string, status Status) error
 }
@@ -72,6 +75,29 @@ func (s *mongoStorage) GetUploadByID(ctx context.Context, id string) (u Upload, 
 	}
 
 	return u, nil
+}
+
+func (s *mongoStorage) GetUploadNameByBookID(ctx context.Context, bookId string) (name string, err error) {
+	filter := bson.M{"bookId": bookId}
+
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	result := s.collection.FindOne(ctx, filter)
+	if err = result.Err(); err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return name, errors.New("book not found")
+		}
+
+		return name, fmt.Errorf("failed to execute query. error: %w", err)
+	}
+
+	var upload Upload
+	if err = result.Decode(&upload); err != nil {
+		return name, fmt.Errorf("failed to decode document. error: %w", err)
+	}
+
+	return upload.Filename, nil
 }
 
 func (s *mongoStorage) DeleteUpload(ctx context.Context, id string) error {

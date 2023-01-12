@@ -62,19 +62,19 @@ func main() {
 	authHandler := auth.NewHandler(userService, logger)
 	authHandler.Register(router)
 
-	booksStorage := books.NewMongoStorage(mongoClient.Database(cfg.DB.Name), booksCollection, logger)
-	// booksStorage := db.NewMockStorage(logger)
-	booksService := books.NewService(booksStorage, logger)
-	booksHandler := books.NewHandler(apiPath, booksService, logger)
-	booksHandler.Register(router)
-
 	healthHandler := health.NewHandler(apiPath)
 	healthHandler.Register(router)
 
 	uploadsStorage := uploads.NewMongoStorage(mongoClient.Database(cfg.DB.Name), uploadsCollection, logger)
-	uploadsService := uploads.NewService(uploadsStorage, fileProvider, logger)
-	uploadsHandler := uploads.NewHandler(apiPath, uploadsService, logger)
+	uploadsUseCase := uploads.NewUseCase(uploadsStorage, fileProvider, logger)
+	uploadsHandler := uploads.NewHandler(apiPath, uploadsUseCase, logger)
 	uploadsHandler.Register(router)
+
+	booksStorage := books.NewMongoStorage(mongoClient.Database(cfg.DB.Name), booksCollection, logger)
+	// booksStorage := db.NewMockStorage(logger)
+	booksUseCase := books.NewUseCase(booksStorage, uploadsStorage, fileProvider, logger)
+	booksHandler := books.NewHandler(apiPath, booksUseCase, logger)
+	booksHandler.Register(router)
 
 	start(ctx, router, logger, cfg)
 }

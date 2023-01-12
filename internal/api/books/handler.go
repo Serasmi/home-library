@@ -3,6 +3,7 @@ package books
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/Serasmi/home-library/internal/jwt"
@@ -14,18 +15,19 @@ import (
 )
 
 const (
-	booksURL = "/books"
-	bookURL  = "/books/:id"
+	booksURL    = "/books"
+	bookURL     = "/books/:id"
+	downloadURL = "/download/:id"
 )
 
 type handler struct {
 	apiPath string
-	service Service
+	useCase UseCase
 	logger  *logging.Logger
 }
 
-func NewHandler(apiPath string, service Service, logger *logging.Logger) handlers.Handler {
-	return &handler{apiPath, service, logger}
+func NewHandler(apiPath string, useCase UseCase, logger *logging.Logger) handlers.Handler {
+	return &handler{apiPath, useCase, logger}
 }
 
 func (h *handler) Register(router *httprouter.Router) {
@@ -34,13 +36,14 @@ func (h *handler) Register(router *httprouter.Router) {
 	router.HandlerFunc(http.MethodPost, h.apiPath+booksURL, jwt.Protected(h.Create, h.logger))
 	router.HandlerFunc(http.MethodPatch, h.apiPath+bookURL, jwt.Protected(h.PartiallyUpdate, h.logger))
 	router.HandlerFunc(http.MethodDelete, h.apiPath+bookURL, jwt.Protected(h.Delete, h.logger))
+	router.HandlerFunc(http.MethodGet, h.apiPath+downloadURL, jwt.Protected(h.Download, h.logger))
 }
 
 func (h *handler) GetAll(w http.ResponseWriter, r *http.Request) {
 	h.logger.Info("Get all books")
 	w.Header().Set("Content-Type", "application/json")
 
-	books, err := h.service.GetAll(r.Context())
+	books, err := h.useCase.GetAll(r.Context())
 	if err != nil {
 		h.logger.Error(err)
 	}
@@ -66,7 +69,7 @@ func (h *handler) GetByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	book, err := h.service.GetByID(r.Context(), id)
+	book, err := h.useCase.GetByID(r.Context(), id)
 	if err != nil {
 		h.logger.Error(err)
 	}
@@ -97,7 +100,7 @@ func (h *handler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := h.service.Create(r.Context(), dto)
+	id, err := h.useCase.Create(r.Context(), dto)
 	if err != nil {
 		h.logger.Error(err)
 
@@ -154,7 +157,7 @@ func (h *handler) PartiallyUpdate(w http.ResponseWriter, r *http.Request) {
 
 	dto.ID = id
 
-	err = h.service.Update(r.Context(), dto)
+	err = h.useCase.Update(r.Context(), dto)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		_, _ = fmt.Fprint(w, "updating entity server error")
@@ -177,7 +180,7 @@ func (h *handler) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err = h.service.Delete(r.Context(), id); err != nil {
+	if err = h.useCase.Delete(r.Context(), id); err != nil {
 		h.logger.Error(err)
 		w.WriteHeader(http.StatusInternalServerError)
 
@@ -185,4 +188,35 @@ func (h *handler) Delete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *handler) Download(w http.ResponseWriter, r *http.Request) {
+	h.logger.Info("Download book")
+
+	id, err := handlers.RequestID(r, h.logger)
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		_, _ = fmt.Fprint(w, "id parameter is required in request path")
+
+		return
+	}
+
+	rc, err := h.useCase.Download(r.Context(), id)
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		_, _ = fmt.Fprint(w, "download file error")
+
+		return
+	}
+
+	defer func() { _ = rc.Close() }()
+
+	w.Header().Set("Content-Type", "application/octet-stream")
+
+	_, err = io.Copy(w, rc)
+	if err != nil {
+		h.logger.Error("download book response")
+	}
 }

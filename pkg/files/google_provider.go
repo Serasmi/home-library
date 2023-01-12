@@ -7,6 +7,8 @@ import (
 	"github.com/Serasmi/home-library/pkg/logging"
 )
 
+var _ FileProvider = (*googleProvider)(nil)
+
 type googleProvider struct {
 	logger *logging.Logger
 }
@@ -15,7 +17,12 @@ func NewGoogleProvider(logger *logging.Logger) FileProvider {
 	return &googleProvider{logger: logger}
 }
 
-func (u googleProvider) Upload(ctx context.Context, r io.ReadCloser, file StoredFile) error {
+func (p googleProvider) Download(ctx context.Context, filename string) (io.ReadCloser, error) {
+	// TODO implement me
+	panic("implement me")
+}
+
+func (p googleProvider) Upload(ctx context.Context, r io.ReadCloser, file StoredFile) error {
 	// TODO implement me
 	panic("implement me")
 }

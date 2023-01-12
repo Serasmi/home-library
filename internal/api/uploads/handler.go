@@ -21,12 +21,12 @@ const (
 
 type handler struct {
 	apiPath string
-	service *Service
+	useCase *UseCase
 	logger  *logging.Logger
 }
 
-func NewHandler(apiPath string, service *Service, logger *logging.Logger) handlers.Handler {
-	return &handler{apiPath, service, logger}
+func NewHandler(apiPath string, useCase *UseCase, logger *logging.Logger) handlers.Handler {
+	return &handler{apiPath, useCase, logger}
 }
 
 func (h *handler) Register(router *httprouter.Router) {
@@ -49,7 +49,7 @@ func (h *handler) Upload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	upload, err := h.service.GetUploadByID(r.Context(), id)
+	upload, err := h.useCase.GetUploadByID(r.Context(), id)
 	if err != nil {
 		h.logger.Error("finding uploads error:", err)
 
@@ -68,7 +68,7 @@ func (h *handler) Upload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	filename, err := h.service.Upload(r.Context(), r.Body, upload)
+	filename, err := h.useCase.Upload(r.Context(), r.Body, upload)
 	if err != nil {
 		h.logger.Error("file uploading error:", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -113,7 +113,7 @@ func (h *handler) CreateUpload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := h.service.CreateUpload(r.Context(), dto)
+	id, err := h.useCase.CreateUpload(r.Context(), dto)
 	if err != nil {
 		h.logger.Error(err)
 
@@ -156,7 +156,7 @@ func (h *handler) DeleteUpload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.service.DeleteUpload(r.Context(), id)
+	err = h.useCase.DeleteUpload(r.Context(), id)
 	if err != nil {
 		h.logger.Error(err)
 		w.WriteHeader(http.StatusInternalServerError)
