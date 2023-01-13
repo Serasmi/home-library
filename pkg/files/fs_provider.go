@@ -41,7 +41,7 @@ func mustInitFS(logger *logging.Logger) {
 	}
 }
 
-func (u fsProvider) Download(_ context.Context, fileName string) (io.ReadCloser, error) {
+func (u fsProvider) Download(_ context.Context, fileName string) ([]byte, error) {
 	if fileName == "" {
 		return nil, errors.New("empty filename")
 	}
@@ -51,7 +51,9 @@ func (u fsProvider) Download(_ context.Context, fileName string) (io.ReadCloser,
 		return nil, errors.New("read file")
 	}
 
-	return file, nil
+	defer func() { _ = file.Close() }()
+
+	return io.ReadAll(file)
 }
 
 func (u fsProvider) Upload(_ context.Context, r io.ReadCloser, file StoredFile) error {

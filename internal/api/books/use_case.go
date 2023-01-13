@@ -2,7 +2,6 @@ package books
 
 import (
 	"context"
-	"io"
 
 	"github.com/Serasmi/home-library/pkg/logging"
 )
@@ -15,7 +14,7 @@ type UseCase interface {
 	Create(ctx context.Context, dto CreateBookDto) (string, error)
 	Update(ctx context.Context, dto UpdateBookDto) error
 	Delete(ctx context.Context, id string) error
-	Download(ctx context.Context, bookId string) (io.ReadCloser, error)
+	Download(ctx context.Context, bookId string) ([]byte, error)
 }
 
 type useCase struct {
@@ -26,7 +25,7 @@ type useCase struct {
 }
 
 type FileProvider interface {
-	Download(ctx context.Context, fileName string) (io.ReadCloser, error)
+	Download(ctx context.Context, fileName string) ([]byte, error)
 }
 
 type UploadStorage interface {
@@ -62,7 +61,7 @@ func (uc *useCase) Delete(ctx context.Context, id string) error {
 	return uc.storage.Remove(ctx, id)
 }
 
-func (uc *useCase) Download(ctx context.Context, bookID string) (io.ReadCloser, error) {
+func (uc *useCase) Download(ctx context.Context, bookID string) ([]byte, error) {
 	fileName, err := uc.uploadStorage.GetUploadNameByBookID(ctx, bookID)
 	if err != nil {
 		return nil, err

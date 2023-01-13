@@ -3,7 +3,6 @@ package books
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 
 	"github.com/Serasmi/home-library/internal/jwt"
@@ -202,7 +201,7 @@ func (h *handler) Download(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rc, err := h.useCase.Download(r.Context(), id)
+	bytes, err := h.useCase.Download(r.Context(), id)
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -211,12 +210,6 @@ func (h *handler) Download(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	defer func() { _ = rc.Close() }()
-
 	w.Header().Set("Content-Type", "application/octet-stream")
-
-	_, err = io.Copy(w, rc)
-	if err != nil {
-		h.logger.Error("download book response")
-	}
+	w.Write(bytes)
 }

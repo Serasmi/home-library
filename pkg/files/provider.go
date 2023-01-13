@@ -11,6 +11,6 @@ type StoredFile struct {
 }
 
 type FileProvider interface {
-	Download(ctx context.Context, filename string) (io.ReadCloser, error)
+	Download(ctx context.Context, filename string) ([]byte, error)
 	Upload(ctx context.Context, r io.ReadCloser, file StoredFile) error
 }

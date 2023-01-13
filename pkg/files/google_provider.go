@@ -17,7 +17,7 @@ func NewGoogleProvider(logger *logging.Logger) FileProvider {
 	return &googleProvider{logger: logger}
 }
 
-func (p googleProvider) Download(ctx context.Context, filename string) (io.ReadCloser, error) {
+func (p googleProvider) Download(ctx context.Context, filename string) ([]byte, error) {
 	// TODO implement me
 	panic("implement me")
 }
